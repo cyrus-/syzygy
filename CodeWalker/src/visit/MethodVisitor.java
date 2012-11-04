@@ -28,7 +28,6 @@ public class MethodVisitor extends BaseVisitor {
 			frequencies.put(typName, inner_table);
 		}
 		
-		System.out.println(mi + " " + bind.getQualifiedName() + " " + bind.getName());
 		return true;
 	}
 	
