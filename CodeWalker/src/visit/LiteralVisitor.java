@@ -1,10 +1,11 @@
 package visit;
 
-import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 
+import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CastExpression;
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.ForStatement;
 import org.eclipse.jdt.core.dom.IBinding;
@@ -12,20 +13,12 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.InfixExpression;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.eclipse.jdt.core.dom.ParameterizedType;
+import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.QualifiedName;
-import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.Block;
-import org.eclipse.jdt.core.dom.ClassInstanceCreation;
-import org.eclipse.jdt.core.dom.Expression;
-import org.eclipse.jdt.core.dom.NumberLiteral;
-import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
-import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
@@ -33,11 +26,11 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
 public class LiteralVisitor extends BaseVisitor {
-	private Hashtable<Integer, Integer> intFrequencies = new Hashtable<Integer, Integer>();
-	private Hashtable<Double, Integer> doubleFrequencies = new Hashtable<Double, Integer>();
-	private Hashtable<Float, Integer> floatFrequencies = new Hashtable<Float, Integer>();
-	private Hashtable<String, Hashtable<String, Integer> > enumFrequencies = new Hashtable<String, Hashtable<String, Integer> >();
-	private Hashtable<String, Integer> stringFrequencies = new Hashtable<String, Integer>();
+	private Hashtable<Integer, Hashtable<Context.ContextType, Integer> > intFrequencies = new Hashtable<Integer, Hashtable<Context.ContextType, Integer> >();
+	private Hashtable<Double, Hashtable<Context.ContextType, Integer> > doubleFrequencies = new Hashtable<Double, Hashtable<Context.ContextType, Integer> >();
+	private Hashtable<Float, Hashtable<Context.ContextType, Integer> > floatFrequencies = new Hashtable<Float, Hashtable<Context.ContextType, Integer> >();
+	private Hashtable<String, Hashtable<String, Hashtable<Context.ContextType, Integer> > > enumFrequencies = new Hashtable<String, Hashtable<String, Hashtable<Context.ContextType, Integer> > >();
+	private Hashtable<String, Hashtable<Context.ContextType, Integer> > stringFrequencies = new Hashtable<String, Hashtable<Context.ContextType, Integer> >();
 	
 	public boolean visit(Block block)
 	{
@@ -110,49 +103,32 @@ public class LiteralVisitor extends BaseVisitor {
 			if(typ == null) {
 				try {
 					final int val = Integer.parseInt(literal.getToken());
-					addInteger(val);
+					addInteger(val, literal);
 					
 				} catch(final Exception e1) {
 					try {
 						final double val = Double.parseDouble(literal.getToken());
-						addDouble(val);
+						addDouble(val, literal);
 					} catch(final Exception e2) {
 						
 					}
 				}
 			} else if(typ.equals("int")) {
 				int num = Integer.parseInt(literal.getToken());
-				addInteger(num);
+				addInteger(num, literal);
 			} else if(typ.equals("double")) {
 				double num = Double.parseDouble(literal.getToken());
-				addDouble(num);
+				addDouble(num, literal);
 			} else if(typ.equals("float")) {
 				float num = Float.parseFloat(literal.getToken());
-				if(floatFrequencies.containsKey(num))
-					floatFrequencies.put(num, floatFrequencies.get(num) + 1);
-				else
-					floatFrequencies.put(num, 1);
+				addFloat(num, literal);
 			}
 		} else if(exp instanceof CastExpression) {
 			CastExpression cast = (CastExpression)exp;
 			processExpression(cast.getExpression(), null);
 		} else if(exp instanceof QualifiedName) {
 			QualifiedName qn = (QualifiedName)exp;
-			String option = qn.getName().toString();
-			String typName = qn.getQualifier().toString();
-			
-			if(enumFrequencies.containsKey(typName)) {
-				Hashtable<String, Integer> innerTable = enumFrequencies.get(typName);
-				if(innerTable.containsKey(option)) {
-					innerTable.put(option, innerTable.get(option) + 1);
-				} else {
-					innerTable.put(option, 1);
-				}
-			} else {
-				Hashtable<String, Integer> innerTable = new Hashtable<String, Integer>();
-				innerTable.put(option, 1);
-				enumFrequencies.put(typName, innerTable);
-			}
+			addEnum(qn);
 		} else if(exp instanceof SimpleName) {
 			SimpleName sn = (SimpleName)exp;
 			// variable!...
@@ -173,11 +149,7 @@ public class LiteralVisitor extends BaseVisitor {
 			StringLiteral lit = (StringLiteral)exp;
 			String val = lit.getLiteralValue();
 			
-			if(stringFrequencies.containsKey(val)) {
-				stringFrequencies.put(val, stringFrequencies.get(val) + 1);
-			} else {
-				stringFrequencies.put(val, 1);
-			}
+			addString(val, lit);
 		} else if(exp instanceof InfixExpression) {
 			// do nothing
 		} else if(exp instanceof MethodInvocation) {
@@ -187,18 +159,98 @@ public class LiteralVisitor extends BaseVisitor {
 		}
 	}
 
-	private void addDouble(double num) {
-		if(doubleFrequencies.containsKey(num))
-			doubleFrequencies.put(num,  doubleFrequencies.get(num) + 1);
-		else
-			doubleFrequencies.put(num, 1);
+	private void addEnum(QualifiedName qn) {
+		String option = qn.getName().toString();
+		String typName = qn.getQualifier().toString();
+		Context.ContextType ctx = Context.findContext(qn);
+		
+		if(enumFrequencies.containsKey(typName)) {
+			Hashtable<String, Hashtable<Context.ContextType, Integer> > innerTable = enumFrequencies.get(typName);
+			if(innerTable.containsKey(option)) {
+				Hashtable<Context.ContextType, Integer> table = innerTable.get(option);
+				if(table.containsKey(ctx))
+					table.put(ctx, table.get(ctx) + 1);
+				else
+					table.put(ctx, 1);
+			} else {
+				Hashtable<Context.ContextType, Integer> table = new Hashtable<Context.ContextType, Integer>();
+				table.put(ctx, 1);
+				innerTable.put(option, table);
+			}
+		} else {
+			Hashtable<String, Hashtable<Context.ContextType, Integer> > innerTable = new Hashtable<String, Hashtable<Context.ContextType, Integer> >();
+			Hashtable<Context.ContextType, Integer> table = new Hashtable<Context.ContextType, Integer>();
+			table.put(ctx, 1);
+			innerTable.put(option, table);
+			enumFrequencies.put(typName, innerTable);
+		}
+		
+	}
+
+	private void addDouble(double num, NumberLiteral lit) {
+		Context.ContextType ctx = Context.findContext(lit);
+		
+		if(doubleFrequencies.containsKey(num)) {
+			Hashtable<Context.ContextType, Integer> table = doubleFrequencies.get(num);
+			if(table.containsKey(ctx)) {
+				table.put(ctx, table.get(ctx) + 1);
+			} else {
+				table.put(ctx,  1);
+			}
+		} else {
+			Hashtable<Context.ContextType, Integer> table = new Hashtable<Context.ContextType, Integer>();
+			table.put(ctx, 1);
+			doubleFrequencies.put(num, table);
+		}
 	}
 	
-	private void addInteger(int num) {
-		if(intFrequencies.containsKey(num))
-			intFrequencies.put(num, intFrequencies.get(num) + 1);
-		else
-			intFrequencies.put(num, 1);
+	private void addInteger(int num, NumberLiteral lit) {
+		Context.ContextType ctx = Context.findContext(lit);
+		if(intFrequencies.containsKey(num)) {
+			Hashtable<Context.ContextType, Integer> table = intFrequencies.get(num);
+			if(table.containsKey(ctx)) {
+				table.put(ctx, table.get(ctx) + 1);
+			} else {
+				table.put(ctx,  1);
+			}
+		} else {
+			Hashtable<Context.ContextType, Integer> table = new Hashtable<Context.ContextType, Integer>();
+			table.put(ctx, 1);
+			intFrequencies.put(num, table);
+		}
+	}
+	
+	private void addFloat(float num, NumberLiteral lit)
+	{
+		Context.ContextType ctx = Context.findContext(lit);
+		if(floatFrequencies.containsKey(num)) {
+			Hashtable<Context.ContextType, Integer> table = floatFrequencies.get(num);
+			if(table.containsKey(ctx)) {
+				table.put(ctx, table.get(ctx) + 1);
+			} else {
+				table.put(ctx,  1);
+			}
+		} else {
+			Hashtable<Context.ContextType, Integer> table = new Hashtable<Context.ContextType, Integer>();
+			table.put(ctx, 1);
+			floatFrequencies.put(num, table);
+		}
+	}
+	
+	private void addString(String val, StringLiteral lit) {
+		Context.ContextType ctx = Context.findContext(lit);
+		if(stringFrequencies.containsKey(val)) {
+			Hashtable<Context.ContextType, Integer> table = stringFrequencies.get(val);
+			if(table.containsKey(ctx)) {
+				table.put(ctx, table.get(ctx) + 1);
+			} else {
+				table.put(ctx,  1);
+			}
+		} else {
+			Hashtable<Context.ContextType, Integer> table = new Hashtable<Context.ContextType, Integer>();
+			table.put(ctx, 1);
+			stringFrequencies.put(val, table);
+		}
 	}
 
 	public void print()
@@ -207,31 +259,52 @@ public class LiteralVisitor extends BaseVisitor {
 		
 		System.out.println("Int Frequencies");
 		for(Integer num : intFrequencies.keySet()) {
-			System.out.println("\t" + num.toString() + " " + intFrequencies.get(num));
+			System.out.println("\t" + num.toString());
+			Hashtable<Context.ContextType, Integer> table = intFrequencies.get(num);
+			for(Context.ContextType ctx : table.keySet()) {
+				System.out.println("\t\t" + ctx + " " + table.get(ctx));
+			}
 		}
 		
 		System.out.println("Double Frequencies");
 		for(Double num : doubleFrequencies.keySet()) {
-			System.out.println("\t" + num.toString() + " " + doubleFrequencies.get(num));
+			System.out.println("\t" + num.toString());
+			Hashtable<Context.ContextType, Integer> table = doubleFrequencies.get(num);
+			for(Context.ContextType ctx : table.keySet()) {
+				System.out.println("\t\t" + ctx + " " + table.get(ctx));
+			}
 		}
 		
 		System.out.println("Float Frequencies");
 		for(Float num : floatFrequencies.keySet()) {
-			System.out.println("\t" + num.toString() + " " + floatFrequencies.get(num));
-		}
-		
-		System.out.println("Enum Frequencies");
-		for(String typ : enumFrequencies.keySet()) {
-			System.out.println(typ);
-			Hashtable<String, Integer> innerTable = enumFrequencies.get(typ);
-			for(String option : innerTable.keySet()) {
-				System.out.println("\t" + option + " " + innerTable.get(option).toString());
+			System.out.println("\t" + num.toString());
+			Hashtable<Context.ContextType, Integer> table = floatFrequencies.get(num);
+			for(Context.ContextType ctx : table.keySet()) {
+				System.out.println("\t\t" + ctx + " " + table.get(ctx));
 			}
 		}
 		
+		System.out.println("Enum Frequencies");
+		for(String typ : enumFrequencies.keySet()){
+			System.out.println(typ);
+			Hashtable<String, Hashtable<Context.ContextType, Integer> > innerTable = enumFrequencies.get(typ);
+			for(String option : innerTable.keySet()) {
+				System.out.println("\t" + option);
+				Hashtable<Context.ContextType, Integer> table = innerTable.get(option);
+				for(Context.ContextType ctx : table.keySet()) {
+					System.out.println("\t\t" + ctx.toString() + " " + table.get(ctx));
+				}
+			}
+		}
+		
+		
 		System.out.println("String Frequencies");
 		for(String val : stringFrequencies.keySet()) {
-			System.out.println("\t" + val + " " + stringFrequencies.get(val));
+			System.out.println("\t" + val.toString());
+			Hashtable<Context.ContextType, Integer> table = stringFrequencies.get(val);
+			for(Context.ContextType ctx : table.keySet()) {
+				System.out.println("\t\t" + ctx + " " + table.get(ctx));
+			}
 		}
 	}
 }

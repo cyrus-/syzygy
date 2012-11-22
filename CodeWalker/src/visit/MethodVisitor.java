@@ -7,16 +7,16 @@ import java.util.Hashtable;
 
 public class MethodVisitor extends BaseVisitor {
 	
-	private Hashtable<String, Hashtable<IMethodBinding, Integer> > frequencies = new Hashtable<String, Hashtable<IMethodBinding, Integer> >();
+	private Hashtable<TypeContext, Hashtable<IMethodBinding, Integer> > frequencies = new Hashtable<TypeContext, Hashtable<IMethodBinding, Integer> >();
 	
 	public boolean visit(MethodInvocation mi)
 	{
 		ITypeBinding bind = mi.resolveTypeBinding();
-		String typName = bind.getQualifiedName();
 		IMethodBinding meth = mi.resolveMethodBinding();
+		TypeContext tctx = new TypeContext(bind.getQualifiedName(), mi);
 		
-		if(frequencies.containsKey(typName)) {
-			Hashtable<IMethodBinding, Integer> inner_table = frequencies.get(typName);
+		if(frequencies.containsKey(tctx)) {	
+			Hashtable<IMethodBinding, Integer> inner_table = frequencies.get(tctx);
 			if(inner_table.containsKey(meth)) {
 				inner_table.put(meth, inner_table.get(meth) + 1);
 			} else {
@@ -25,7 +25,7 @@ public class MethodVisitor extends BaseVisitor {
 		} else {
 			Hashtable<IMethodBinding, Integer> inner_table = new Hashtable<IMethodBinding, Integer>();
 			inner_table.put(meth, 1);
-			frequencies.put(typName, inner_table);
+			frequencies.put(tctx, inner_table);
 		}
 		
 		return true;
@@ -33,9 +33,9 @@ public class MethodVisitor extends BaseVisitor {
 	
 	public void print()
 	{
-		for(String typName : frequencies.keySet()) {
-			System.out.println(typName);
-			Hashtable<IMethodBinding, Integer> inner_table = frequencies.get(typName);
+		for(TypeContext tctx : frequencies.keySet()) {
+			System.out.println(tctx);
+			Hashtable<IMethodBinding, Integer> inner_table = frequencies.get(tctx);
 			for(IMethodBinding meth : inner_table.keySet()) {
 				System.out.println("\t" + meth.toString() + " " + inner_table.get(meth));
 			}

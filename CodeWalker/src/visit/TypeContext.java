@@ -1,0 +1,33 @@
+package visit;
+
+import org.eclipse.jdt.core.dom.ASTNode;
+
+public class TypeContext {
+	private String fullTypeName;
+	private Context.ContextType contextType;
+	
+	public String toString()
+	{
+		return fullTypeName + " " + contextType.toString();
+	}
+	
+	public boolean equals(Object other)
+	{
+		if(this == other) return true;
+		if(!(other instanceof TypeContext)) return false;
+		
+		TypeContext other1 = (TypeContext)other;
+		return other1.fullTypeName.equals(fullTypeName) && other1.contextType.equals(contextType);
+ 	}
+	
+	public int hashCode()
+	{
+		return fullTypeName.hashCode() + contextType.hashCode();
+	}
+	
+	TypeContext(String fullType, ASTNode node)
+	{
+		fullTypeName = fullType;
+		contextType = Context.findContext(node);
+	}
+}

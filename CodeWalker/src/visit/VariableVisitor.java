@@ -10,7 +10,7 @@ import org.eclipse.jdt.core.dom.SimpleName;
 
 public class VariableVisitor extends BaseVisitor {
 	
-	private Hashtable<String, Integer> frequencies = new Hashtable<String, Integer>();
+	private Hashtable<TypeContext, Integer> frequencies = new Hashtable<TypeContext, Integer>();
 	
 	public boolean visit(SimpleName name)
 	{
@@ -18,12 +18,12 @@ public class VariableVisitor extends BaseVisitor {
 			IBinding bind = name.resolveBinding();
 			ITypeBinding typ = name.resolveTypeBinding();
 			if(bind.getKind() == IBinding.VARIABLE && !typ.isEnum()) {
-				String typName = typ.getName();
-				
-				if(frequencies.containsKey(typName)) {
-					frequencies.put(typName, frequencies.get(typName) + 1);
+				String typName = typ.getQualifiedName();
+				TypeContext tctx = new TypeContext(typName, name);
+				if(frequencies.containsKey(tctx)) {
+					frequencies.put(tctx, frequencies.get(tctx) + 1);
 				} else {
-					frequencies.put(typName, 1);
+					frequencies.put(tctx, 1);
 				}
 			}
 		}
@@ -32,8 +32,9 @@ public class VariableVisitor extends BaseVisitor {
 	
 	public void print()
 	{
-		for(String typ : frequencies.keySet()) {
-			System.out.println(typ + " " + frequencies.get(typ));
+		for(TypeContext tctx : frequencies.keySet()) {
+			
+			System.out.println(tctx + " " + frequencies.get(tctx));
 		}
 	}
 }
