@@ -5,7 +5,7 @@
          point="org.eclipse.ui.actionSets">
       <actionSet
             id="CodeWalker.actionSet"
-            label="Sample Action Set"
+            label="Walker Action Set"
             visible="true">
          <menu
                id="sampleMenu"
@@ -18,10 +18,10 @@
                class="codewalker.actions.SampleAction"
                icon="icons/sample.gif"
                id="codewalker.actions.SampleAction"
-               label="&amp;Sample Action"
+               label="&amp;Run"
                menubarPath="sampleMenu/sampleGroup"
                toolbarPath="sampleGroup"
-               tooltip="Hello, Eclipse world">
+               tooltip="AST Statistics">
          </action>
       </actionSet>
    </extension>
