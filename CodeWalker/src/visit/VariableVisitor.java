@@ -1,5 +1,6 @@
 package visit;
 
+import java.io.Serializable;
 import java.util.Hashtable;
 
 import org.eclipse.jdt.core.IJavaElement;
@@ -8,7 +9,9 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.SimpleName;
 
 
-public class VariableVisitor extends BaseVisitor {
+public class VariableVisitor extends BaseVisitor implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
 	
 	private Hashtable<TypeContext, Integer> frequencies = new Hashtable<TypeContext, Integer>();
 	

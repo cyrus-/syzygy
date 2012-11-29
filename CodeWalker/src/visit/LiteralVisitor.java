@@ -1,6 +1,7 @@
 package visit;
 
 import java.util.Hashtable;
+import java.io.Serializable;
 import java.util.List;
 
 import org.eclipse.jdt.core.dom.Block;
@@ -25,7 +26,12 @@ import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
-public class LiteralVisitor extends BaseVisitor {
+public class LiteralVisitor extends BaseVisitor implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	private Hashtable<Integer, Hashtable<Context.ContextType, Integer> > intFrequencies = new Hashtable<Integer, Hashtable<Context.ContextType, Integer> >();
 	private Hashtable<Double, Hashtable<Context.ContextType, Integer> > doubleFrequencies = new Hashtable<Double, Hashtable<Context.ContextType, Integer> >();
 	private Hashtable<Float, Hashtable<Context.ContextType, Integer> > floatFrequencies = new Hashtable<Float, Hashtable<Context.ContextType, Integer> >();

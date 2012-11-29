@@ -11,6 +11,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
 public class Context {
+	
 	public enum ContextType {
 		VAR_DECLARATION,
 		STATEMENT,
