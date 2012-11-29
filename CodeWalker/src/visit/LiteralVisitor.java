@@ -136,9 +136,6 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 			QualifiedName qn = (QualifiedName)exp;
 			addEnum(qn);
 		} else if(exp instanceof SimpleName) {
-			SimpleName sn = (SimpleName)exp;
-			// variable!...
-			IBinding bnd = sn.resolveBinding();
 			
 		} else if(exp instanceof VariableDeclarationExpression) {
 			VariableDeclarationExpression vd = (VariableDeclarationExpression)exp;
