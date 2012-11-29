@@ -14,6 +14,15 @@ public class VariableVisitor extends BaseVisitor implements Serializable {
 	
 	private Hashtable<TypeContext, Integer> frequencies = new Hashtable<TypeContext, Integer>();
 	
+	public Integer getCount(TypeContext tctx)
+	{
+		if(frequencies.containsKey(tctx)) {
+			return frequencies.get(tctx);
+		} else {
+			return 0;
+		}
+	}
+	
 	public boolean visit(SimpleName name)
 	{
 		if(!name.isDeclaration()) {
