@@ -17,7 +17,14 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 	
 	private Method findMethod(IMethodBinding meth)
 	{
-		String className = meth.getDeclaringClass().getQualifiedName();
+		ITypeBinding cl = meth.getDeclaringClass();
+		
+		if(cl == null) {
+			System.err.println("Could not found class of method " + meth);
+			return null;
+		}
+		
+		String className = cl.getQualifiedName();
 		
 		if(methods.containsKey(className)) {
 			ArrayList<Method> ls = methods.get(className);
@@ -47,9 +54,23 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 	public boolean visit(MethodInvocation mi)
 	{
 		ITypeBinding bind = mi.resolveTypeBinding();
+		if(bind == null) {
+			System.err.println("Could not solve binding of " + mi);
+			return true;
+		}
+		
 		IMethodBinding meth = mi.resolveMethodBinding();
+		
+		if(meth == null) {
+			System.err.println("Could not resolve binding of method " + mi);
+			return true;
+		}
+		
 		TypeContext tctx = new TypeContext(bind.getQualifiedName(), mi);
 		Method method = findMethod(meth);
+		
+		if(method == null)
+			return true;
 		
 		if(frequencies.containsKey(tctx)) {	
 			Hashtable<Method, Integer> inner_table = frequencies.get(tctx);

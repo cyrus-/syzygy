@@ -27,12 +27,15 @@ import dir.JavaFile;
 
 public class SampleAction implements IWorkbenchWindowActionDelegate {
 	private IWorkbenchWindow window;
+	private static LiteralVisitor lit = new LiteralVisitor();
+	private static VariableVisitor var = new VariableVisitor();
+	private static MethodVisitor methods = new MethodVisitor();
 
 	public SampleAction() {
 	}
 	
-	private static Directory traverseDir(File dir, IJavaProject prj)
-	{
+	private static void traverseDir(File dir, IJavaProject prj)
+	{	
 		Directory currentDir = new Directory();
 		File[] files = dir.listFiles();
 		
@@ -41,34 +44,27 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 				continue;
 			}
 			
-			currentDir.addChild(traverseDir(child, prj));
+			traverseDir(child, prj);
 		}
 		
 		// add child files
 		for (File child : files) {
 			if (child.isFile() && child.getName().toLowerCase().endsWith(".java")) {
-				currentDir.addChild(new JavaFile(child, prj));
+				JavaFile file = new JavaFile(child, prj);
+				file.accept(lit);
+				file.accept(methods);
+				file.accept(var);
 			}
 		}
-		
-		return currentDir;
 	}
 
 	public void run(IAction action)
 	{
-		IProject proj = ResourcesPlugin.getWorkspace().getRoot().getProject("planet");
+		IProject proj = ResourcesPlugin.getWorkspace().getRoot().getProject("antlr");
 		System.out.println(proj.getLocation());
 		IJavaProject jproj = JavaCore.create(proj);
 				
-		Directory dir = traverseDir(proj.getLocation().toFile(), jproj);
-		
-		LiteralVisitor lit = new LiteralVisitor();
-		VariableVisitor var = new VariableVisitor();
-		MethodVisitor methods = new MethodVisitor();
-		
-		dir.accept(lit);
-		dir.accept(methods);
-		dir.accept(var);
+		traverseDir(proj.getLocation().toFile(), jproj);
 		
 		// serialize everything into a file
 		try {

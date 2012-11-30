@@ -28,6 +28,17 @@ public class VariableVisitor extends BaseVisitor implements Serializable {
 		if(!name.isDeclaration()) {
 			IBinding bind = name.resolveBinding();
 			ITypeBinding typ = name.resolveTypeBinding();
+			
+			if(bind == null) {
+				System.err.println("Could not resolve binding of " + name);
+				return true;
+			}
+			
+			if(typ == null) {
+				System.err.println("Could not resolve binding of " + name);
+				return true;
+			}
+			
 			if(bind.getKind() == IBinding.VARIABLE && !typ.isEnum()) {
 				String typName = typ.getQualifiedName();
 				TypeContext tctx = new TypeContext(typName, name);

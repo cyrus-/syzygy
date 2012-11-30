@@ -26,6 +26,9 @@ public class Method implements Serializable {
 				return false;
 			
 			ITypeBinding []typs = meth.getParameterTypes();
+			if(typs.length != argumentTypes.length)
+				return false;
+			
 			int i = 0;
 			for(ITypeBinding typ : typs) {
 				if(!typ.getQualifiedName().equals(argumentTypes[i]))

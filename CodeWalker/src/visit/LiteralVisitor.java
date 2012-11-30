@@ -82,7 +82,7 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 				}
 				processExpression(fs.getExpression(), "boolean");
 			} else {
-				System.out.println("Don't know how to handle expressions of type " + statement.getClass().toString());
+				System.out.println("Don't know how to handle expressions of type " + statement.getClass().toString() + " " + statement);
 			}
 		}
 		return true;
@@ -91,6 +91,16 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	// Method and its return type
 	private void processMethodInvocation(MethodInvocation mi) {
 		IMethodBinding mb = mi.resolveMethodBinding();
+		
+		if(mb == null) {
+			System.err.println("failed to resolve binding of file " + mi);
+			return;
+		}
+		
+		if(mb.getParameterTypes().length != mi.arguments().size()) {
+			System.err.println("Arguments don't agree with types in " + mi + " " + mb);
+			return;
+		}
 		
 		for(int i = 0; i < mb.getParameterTypes().length; i++) {
 			ITypeBinding type = mb.getParameterTypes()[i];
@@ -102,6 +112,12 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	
 	// Expression and type
 	private void processExpression(Expression exp, String typ) {
+		
+		if(exp == null) {
+			System.err.println("exp is null");
+			return;
+		}
+		
 		// Type a = 25 (number)
 		if(exp instanceof NumberLiteral) {
 			NumberLiteral literal = (NumberLiteral)exp;
@@ -120,8 +136,12 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 					}
 				}
 			} else if(typ.equals("int")) {
-				int num = Integer.parseInt(literal.getToken());
-				addInteger(num, literal);
+				try {
+					int num = Integer.parseInt(literal.getToken());
+					addInteger(num, literal);
+				} catch(final Exception e1) {
+					
+				}
 			} else if(typ.equals("double")) {
 				double num = Double.parseDouble(literal.getToken());
 				addDouble(num, literal);
