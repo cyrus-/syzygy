@@ -36,7 +36,6 @@ public class Context {
 		} else if(parent instanceof InfixExpression || parent instanceof ConditionalExpression) {
 			return ContextType.METHOD_ARGUMENT;
 		} else {
-			System.out.println(parent.getClass().toString());
 			return ContextType.OTHER_CONTEXT;
 		}
 	}

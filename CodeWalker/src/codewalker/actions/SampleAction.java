@@ -57,18 +57,11 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			}
 		}
 	}
-
-	public void run(IAction action)
+	
+	public void serialize(String fileName)
 	{
-		IProject proj = ResourcesPlugin.getWorkspace().getRoot().getProject("antlr");
-		System.out.println(proj.getLocation());
-		IJavaProject jproj = JavaCore.create(proj);
-				
-		traverseDir(proj.getLocation().toFile(), jproj);
-		
-		// serialize everything into a file
 		try {
-			FileOutputStream fout = new FileOutputStream("collected.data");
+			FileOutputStream fout = new FileOutputStream(fileName);
 			
 			ObjectOutputStream out = new ObjectOutputStream(fout);
 			
@@ -84,10 +77,12 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		// deserialize objects from file
-		 try {
-			FileInputStream fis = new FileInputStream("collected.data");
+	}
+	
+	public void deserialize(String fileName)
+	{
+		try {
+			FileInputStream fis = new FileInputStream(fileName);
 			ObjectInputStream in = new ObjectInputStream(fis);
 			
 			methods = (MethodVisitor)in.readObject();
@@ -103,6 +98,15 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void run(IAction action)
+	{
+		IProject proj = ResourcesPlugin.getWorkspace().getRoot().getProject("antlr");
+		System.out.println(proj.getLocation());
+		IJavaProject jproj = JavaCore.create(proj);
+				
+		traverseDir(proj.getLocation().toFile(), jproj);
 
 		var.print();
 		lit.print();
