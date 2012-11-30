@@ -99,18 +99,23 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			e.printStackTrace();
 		}
 	}
+	
+	public void print()
+	{
+		var.print();
+		lit.print();
+		methods.print();
+	}
 
 	public void run(IAction action)
 	{
-		IProject proj = ResourcesPlugin.getWorkspace().getRoot().getProject("antlr");
+		IProject proj = ResourcesPlugin.getWorkspace().getRoot().getProject("ant");
 		System.out.println(proj.getLocation());
 		IJavaProject jproj = JavaCore.create(proj);
 				
 		traverseDir(proj.getLocation().toFile(), jproj);
-
-		var.print();
-		lit.print();
-		methods.print();
+		//print();
+		
 		MessageDialog.openInformation(window.getShell(), "CodeWalker",
 				"Statistics were collected");
 	}

@@ -5,6 +5,8 @@ import java.util.Hashtable;
 
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
 
 
@@ -23,6 +25,16 @@ public class VariableVisitor extends BaseVisitor implements Serializable {
 		}
 	}
 	
+	public boolean visit(ImportDeclaration decl)
+	{
+		return false;
+	}
+	
+	public boolean visit(PackageDeclaration unit)
+	{
+		return false;
+	}
+	
 	public boolean visit(SimpleName name)
 	{
 		if(!name.isDeclaration()) {
@@ -30,12 +42,12 @@ public class VariableVisitor extends BaseVisitor implements Serializable {
 			ITypeBinding typ = name.resolveTypeBinding();
 			
 			if(bind == null) {
-				System.err.println("Could not resolve binding of " + name);
+				System.err.println("Could not resolve binding of " + name + " " + name.getParent().getParent().getParent().getClass());
 				return true;
 			}
 			
 			if(typ == null) {
-				System.err.println("Could not resolve binding of " + name);
+				System.err.println("Could not resolve binding of " + name + " " + name.getParent().getParent().getParent().getClass());
 				return true;
 			}
 			

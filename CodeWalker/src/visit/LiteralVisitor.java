@@ -5,7 +5,10 @@ import java.io.Serializable;
 import java.util.List;
 
 import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.BooleanLiteral;
 import org.eclipse.jdt.core.dom.CastExpression;
+import org.eclipse.jdt.core.dom.CharacterLiteral;
+import org.eclipse.jdt.core.dom.ConditionalExpression;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.ForStatement;
@@ -38,150 +41,55 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	private Hashtable<String, Hashtable<String, Hashtable<Context.ContextType, Integer> > > enumFrequencies = new Hashtable<String, Hashtable<String, Hashtable<Context.ContextType, Integer> > >();
 	private Hashtable<String, Hashtable<Context.ContextType, Integer> > stringFrequencies = new Hashtable<String, Hashtable<Context.ContextType, Integer> >();
 	
-	public boolean visit(Block block)
+	public boolean visit(NumberLiteral literal)
 	{
-		List<Object> statements = block.statements();
-		for (Object statement : statements) {
-			// variable declarations
-			if (statement instanceof VariableDeclarationStatement) {
-				VariableDeclarationStatement vds = (VariableDeclarationStatement) statement;
-				Type typ = vds.getType();
-				
-				for (Object fragment : vds.fragments()) {
-					VariableDeclarationFragment vdf = (VariableDeclarationFragment) fragment;
-					if (vdf.getInitializer() != null) {
-						Expression init = vdf.getInitializer();
-						processExpression(init, typ.toString());
-					}
+		String typ = null;
+		
+		if(typ == null) {
+			try {
+				final int val = Integer.parseInt(literal.getToken());
+				addInteger(val, literal);
+			
+			} catch(final Exception e1) {
+				try {
+					final double val = Double.parseDouble(literal.getToken());
+					addDouble(val, literal);
+				} catch(final Exception e2) {
 				}
-			} else if(statement instanceof ExpressionStatement) {
-				ExpressionStatement es = (ExpressionStatement) statement;
-				
-				
-				if (es.getExpression() instanceof MethodInvocation) {
-					MethodInvocation mi = (MethodInvocation) es.getExpression();
-					
-					processMethodInvocation(mi);
-				}
-			} else if(statement instanceof ReturnStatement) {
-				ReturnStatement rs = (ReturnStatement)statement;
-				Expression re = (Expression)rs.getExpression();
-				processExpression(re, null);
-			} else if(statement instanceof IfStatement) {
-				IfStatement i = (IfStatement)statement;
-				processExpression(i.getExpression(), "boolean");
-			} else if(statement instanceof ForStatement) {
-				ForStatement fs = (ForStatement)statement;
-				List updaters = fs.updaters();
-				List inits = fs.initializers();
-				for(Object up : updaters) {
-					processExpression((Expression)up, null);
-				}
-				for(Object init : inits) {
-					processExpression((Expression)init, null);
-				}
-				processExpression(fs.getExpression(), "boolean");
-			} else {
-				System.out.println("Don't know how to handle expressions of type " + statement.getClass().toString() + " " + statement);
 			}
+		} else if(typ.equals("int")) {
+			try {
+				int num = Integer.parseInt(literal.getToken());
+				addInteger(num, literal);
+			} catch(final Exception e1) {
+				
+			}
+		} else if(typ.equals("double")) {
+			double num = Double.parseDouble(literal.getToken());
+			addDouble(num, literal);
+		} else if(typ.equals("float")) {
+			float num = Float.parseFloat(literal.getToken());
+			addFloat(num, literal);
 		}
-		return true;
+		
+		return false;
 	}
 	
-	// Method and its return type
-	private void processMethodInvocation(MethodInvocation mi) {
-		IMethodBinding mb = mi.resolveMethodBinding();
-		
-		if(mb == null) {
-			System.err.println("failed to resolve binding of file " + mi);
-			return;
-		}
-		
-		if(mb.getParameterTypes().length != mi.arguments().size()) {
-			System.err.println("Arguments don't agree with types in " + mi + " " + mb);
-			return;
-		}
-		
-		for(int i = 0; i < mb.getParameterTypes().length; i++) {
-			ITypeBinding type = mb.getParameterTypes()[i];
-			Object arg = mi.arguments().get(i);
-			
-			processExpression((Expression)arg, type.getName());
-		}
+	public boolean visit(QualifiedName qn)
+	{
+		addEnum(qn);
+		return false;
 	}
 	
-	// Expression and type
-	private void processExpression(Expression exp, String typ) {
+	public boolean visit(StringLiteral lit)
+	{
+		String val = lit.getLiteralValue();
 		
-		if(exp == null) {
-			System.err.println("exp is null");
-			return;
-		}
+		addString(val, lit);
 		
-		// Type a = 25 (number)
-		if(exp instanceof NumberLiteral) {
-			NumberLiteral literal = (NumberLiteral)exp;
-			
-			if(typ == null) {
-				try {
-					final int val = Integer.parseInt(literal.getToken());
-					addInteger(val, literal);
-					
-				} catch(final Exception e1) {
-					try {
-						final double val = Double.parseDouble(literal.getToken());
-						addDouble(val, literal);
-					} catch(final Exception e2) {
-						
-					}
-				}
-			} else if(typ.equals("int")) {
-				try {
-					int num = Integer.parseInt(literal.getToken());
-					addInteger(num, literal);
-				} catch(final Exception e1) {
-					
-				}
-			} else if(typ.equals("double")) {
-				double num = Double.parseDouble(literal.getToken());
-				addDouble(num, literal);
-			} else if(typ.equals("float")) {
-				float num = Float.parseFloat(literal.getToken());
-				addFloat(num, literal);
-			}
-		} else if(exp instanceof CastExpression) {
-			CastExpression cast = (CastExpression)exp;
-			processExpression(cast.getExpression(), null);
-		} else if(exp instanceof QualifiedName) {
-			QualifiedName qn = (QualifiedName)exp;
-			addEnum(qn);
-		} else if(exp instanceof SimpleName) {
-			
-		} else if(exp instanceof VariableDeclarationExpression) {
-			VariableDeclarationExpression vd = (VariableDeclarationExpression)exp;
-			for (Object fragment : vd.fragments()) {
-				VariableDeclarationFragment vdf = (VariableDeclarationFragment) fragment;
-				if (vdf.getInitializer() != null) {
-					Expression init = vdf.getInitializer();
-					processExpression(init, typ);
-				}
-			}
-		} else if(exp instanceof PrefixExpression) {
-			// do nothing
-		} else if(exp instanceof StringLiteral) {
-			StringLiteral lit = (StringLiteral)exp;
-			String val = lit.getLiteralValue();
-			
-			addString(val, lit);
-		} else if(exp instanceof InfixExpression) {
-			// do nothing
-		} else if(exp instanceof MethodInvocation) {
-			processMethodInvocation((MethodInvocation)exp);
-		} else {
-			System.out.println("Don't know what to do with " + exp.getClass().getName());
-		}
+		return false;
 	}
-
+	
 	private void addEnum(QualifiedName qn) {
 		String option = qn.getName().toString();
 		String typName = qn.getQualifier().toString();
