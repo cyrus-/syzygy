@@ -1,33 +1,16 @@
 package visit;
 
-import java.util.Hashtable;
 import java.io.Serializable;
-import java.util.List;
+import java.util.Hashtable;
 
-import org.eclipse.jdt.core.dom.Block;
-import org.eclipse.jdt.core.dom.BooleanLiteral;
-import org.eclipse.jdt.core.dom.CastExpression;
-import org.eclipse.jdt.core.dom.CharacterLiteral;
-import org.eclipse.jdt.core.dom.ConditionalExpression;
-import org.eclipse.jdt.core.dom.Expression;
-import org.eclipse.jdt.core.dom.ExpressionStatement;
-import org.eclipse.jdt.core.dom.ForStatement;
 import org.eclipse.jdt.core.dom.IBinding;
-import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.IfStatement;
-import org.eclipse.jdt.core.dom.InfixExpression;
-import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NumberLiteral;
-import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.QualifiedName;
-import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StringLiteral;
-import org.eclipse.jdt.core.dom.Type;
-import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
-import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
-import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+
+import visit.Context.ContextType;
 
 public class LiteralVisitor extends BaseVisitor implements Serializable {
 	/**
@@ -77,7 +60,15 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	
 	public boolean visit(QualifiedName qn)
 	{
-		addEnum(qn);
+		if(!qn.getQualifier().isQualifiedName()) {
+			return false;
+		}
+		
+		String option = qn.getName().toString();
+		String typName = qn.getQualifier().getFullyQualifiedName().toString();
+		Context.ContextType ctx = Context.findContext(qn);
+		
+		addEnum(typName, option, ctx);
 		return false;
 	}
 	
@@ -90,11 +81,25 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 		return false;
 	}
 	
-	private void addEnum(QualifiedName qn) {
-		String option = qn.getName().toString();
-		String typName = qn.getQualifier().toString();
-		Context.ContextType ctx = Context.findContext(qn);
+	public boolean visit(SimpleName name)
+	{
+		ITypeBinding typ = name.resolveTypeBinding();
+		IBinding bind = name.resolveBinding();
 		
+		if(typ == null)
+			return false;
+		if(bind == null)
+			return false;
+		
+		if(typ.isEnum() && bind.getKind() == IBinding.VARIABLE && !name.isDeclaration()) {
+			addEnum(typ.getQualifiedName(), name.toString(), Context.findContext(name));
+		}
+		
+		return false;
+	}
+	
+	private void addEnum(String typName, String option, Context.ContextType ctx) {
+		System.out.println(typName + "." + option);
 		if(enumFrequencies.containsKey(typName)) {
 			Hashtable<String, Hashtable<Context.ContextType, Integer> > innerTable = enumFrequencies.get(typName);
 			if(innerTable.containsKey(option)) {
@@ -237,5 +242,117 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 				System.out.println("\t\t" + ctx + " " + table.get(ctx));
 			}
 		}
+	}
+
+	public int countAllInts(ContextType typ) {
+		int total = 0;
+		
+		for(Integer num : intFrequencies.keySet()) {
+			Hashtable<Context.ContextType, Integer> table = intFrequencies.get(num);
+			
+			if(table.containsKey(typ)) {
+				total += table.get(typ);
+			}
+		}
+		
+		return total;
+	}
+
+	public int countInt(int val, ContextType typ) {
+		if(intFrequencies.containsKey(val)) {
+			Hashtable<Context.ContextType, Integer> table = intFrequencies.get(val);
+			
+			if(table.containsKey(typ)) {
+				return table.get(typ);
+			}
+		}
+		
+		return 0;
+	}
+
+	public int countAllDoubles(ContextType typ) {
+		int total = 0;
+		
+		for(Double num : doubleFrequencies.keySet()) {
+			Hashtable<Context.ContextType, Integer> table = doubleFrequencies.get(num);
+			
+			if(table.containsKey(typ)) {
+				total += table.get(typ);
+			}
+		}
+		
+		return total;
+	}
+
+	public int countDouble(double val, ContextType typ) {
+		if(doubleFrequencies.containsKey(val)) {
+			Hashtable<Context.ContextType, Integer> table = doubleFrequencies.get(val);
+			
+			if(table.containsKey(typ)) {
+				return table.get(typ);
+			}
+		}
+		
+		return 0;
+	}
+
+	public int countAllStrings(ContextType ctx) {
+		int total = 0;
+		
+		for(String str : stringFrequencies.keySet()) {
+			Hashtable<Context.ContextType, Integer> table = stringFrequencies.get(str);
+			
+			if(table.containsKey(ctx)) {
+				total += table.get(ctx);
+			}
+		}
+		
+		return total;
+	}
+
+	public int countString(String val, ContextType ctx) {
+		if(stringFrequencies.containsKey(val)) {
+			Hashtable<Context.ContextType, Integer> table = stringFrequencies.get(val);
+			
+			if(table.containsKey(ctx)) {
+				return table.get(ctx);
+			}
+		}
+		
+		return 0;
+	}
+
+	public int countEnumsOfType(String typName, ContextType ctx) {
+		int total = 0;
+		
+		if(enumFrequencies.containsKey(typName)) {
+			Hashtable<String, Hashtable<Context.ContextType, Integer> > table = enumFrequencies.get(typName);
+			
+			for(String option : table.keySet()) {
+				Hashtable<Context.ContextType, Integer> inner = table.get(option);
+				
+				if(inner.containsKey(ctx)) {
+					total += inner.get(ctx);
+				}
+			}
+		}
+		
+		return total;
+	}
+
+	public int countEnumsOfTypeWithOption(String typName, String option,
+			ContextType ctx) {
+		if(enumFrequencies.containsKey(typName)) {
+			Hashtable<String, Hashtable<Context.ContextType, Integer> > table = enumFrequencies.get(typName);
+			
+			if(table.contains(option)) {
+				Hashtable<Context.ContextType, Integer> inner = table.get(option);
+				
+				if(inner.containsKey(ctx)) {
+					return inner.get(ctx);
+				}
+			}
+		}
+		return 0;
 	}
 }

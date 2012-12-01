@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.LinkedList;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -20,6 +21,7 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import visit.LiteralVisitor;
 import visit.MethodVisitor;
+import visit.Predictor;
 import visit.VariableVisitor;
 import dir.Directory;
 import dir.JavaFile;
@@ -27,16 +29,16 @@ import dir.JavaFile;
 
 public class SampleAction implements IWorkbenchWindowActionDelegate {
 	private IWorkbenchWindow window;
-	private static LiteralVisitor lit = new LiteralVisitor();
-	private static VariableVisitor var = new VariableVisitor();
-	private static MethodVisitor methods = new MethodVisitor();
+	private static LiteralVisitor lit = null;
+	private static VariableVisitor var = null;
+	private static MethodVisitor methods = null;
+	private static final String PROJECT = "planet";
 
 	public SampleAction() {
 	}
 	
-	private static void traverseDir(File dir, IJavaProject prj)
-	{	
-		Directory currentDir = new Directory();
+	private static void getAllFiles(File dir, LinkedList<File> ls)
+	{
 		File[] files = dir.listFiles();
 		
 		for (File child : files) {
@@ -44,18 +46,59 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 				continue;
 			}
 			
-			traverseDir(child, prj);
+			getAllFiles(child, ls);
 		}
 		
 		// add child files
 		for (File child : files) {
 			if (child.isFile() && child.getName().toLowerCase().endsWith(".java")) {
-				JavaFile file = new JavaFile(child, prj);
-				file.accept(lit);
-				file.accept(methods);
-				file.accept(var);
+				ls.add(child);
 			}
 		}
+	}
+	
+	private static void initData()
+	{
+		lit = new LiteralVisitor();
+		var = new VariableVisitor();
+		methods = new MethodVisitor();
+	}
+	
+	private static void trainWithList(IJavaProject prj, LinkedList<File> ls)
+	{
+		initData();
+		for(File file : ls) {
+			System.out.println("Testing on " + file.getName());
+			JavaFile jfile = new JavaFile(file, prj);
+			jfile.accept(lit);
+			jfile.accept(methods);
+			jfile.accept(var);
+		}
+	}
+	
+	private static double trainLeaveOneOut(IJavaProject prj, LinkedList<File> ls)
+	{
+		final int size = ls.size();
+		double total = 0.0;
+		
+		for(int i = 0; i < size; ++i) {
+			File out = ls.get(i);
+			ls.remove(i);
+			
+			
+			trainWithList(prj, ls);
+			//print();
+			Predictor pred = new Predictor(lit, var, methods);
+			
+			double thisfile = pred.test(new JavaFile(out, prj));
+			System.out.println(out.getName() + " got " + thisfile);
+			total += thisfile;
+			
+			ls.add(i, out);
+			assert(ls.size() == size);
+		}
+		
+		return total / (double)ls.size();
 	}
 	
 	public void serialize(String fileName)
@@ -100,7 +143,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		}
 	}
 	
-	public void print()
+	public static void print()
 	{
 		var.print();
 		lit.print();
@@ -109,11 +152,20 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 
 	public void run(IAction action)
 	{
-		IProject proj = ResourcesPlugin.getWorkspace().getRoot().getProject("ant");
-		System.out.println(proj.getLocation());
+		IProject proj = ResourcesPlugin.getWorkspace().getRoot().getProject(PROJECT);
+		
 		IJavaProject jproj = JavaCore.create(proj);
-				
-		traverseDir(proj.getLocation().toFile(), jproj);
+		LinkedList<File> allFiles = new LinkedList<File>();
+		File projectDir = proj.getLocation().toFile();
+		
+		getAllFiles(projectDir, allFiles);
+		
+		//trainWithList(jproj, allFiles);
+		
+		double acc = trainLeaveOneOut(jproj, allFiles);
+		
+		System.out.println("====> Success rate " + acc);
+		
 		//print();
 		
 		MessageDialog.openInformation(window.getShell(), "CodeWalker",
