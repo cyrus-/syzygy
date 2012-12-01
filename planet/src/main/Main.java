@@ -1,16 +1,6 @@
+package main;
 
 public class Main {
-
-   public enum Planet {
-      MERCURY,
-      VENUS,
-      EARTH,
-      MARS,
-      JUPITER,
-      SATURN,
-      URANUS,
-      NEPTUNE
-   }
 
    public static int number() {
       return 7; /// MISSING
@@ -20,12 +10,12 @@ public class Main {
       return "This is a string";
    }
 
-   public static double method(double flt, int n, Planet plt) {
+   public static double method(double flt, int n, Planets.Planet plt) {
       return (double)n * flt;
    }
 
-   public static Planet somePlanet() {
-      return Planet.VENUS;
+   public static Planets.Planet somePlanet() {
+      return Planets.Planet.VENUS;
    }
 
    public static void main(String[] args) {
@@ -36,13 +26,13 @@ public class Main {
       double f = 20.5;
       double f2 = 20.5;
       float flt = (float) 14.5;
-      Planet mars = Planet.MARS;
-      Planet mars2 = Planet.MARS;
-      Planet earth = Planet.EARTH;
-      Planet copy = earth;
-      double f3 = method(f, c, Planet.JUPITER);
+      Planets.Planet mars = Planets.Planet.MARS;
+      Planets.Planet mars2 = Planets.Planet.MARS;
+      Planets.Planet earth = Planets.Planet.EARTH;
+      Planets.Planet copy = earth;
+      double f3 = method(f, c, Planets.Planet.JUPITER);
 
-      method(3.14, 2, Planet.EARTH);
+      method(3.14, 2, Planets.Planet.EARTH);
       method(1.0, 1, somePlanet());
       
       if(f3 == 1.0) {
