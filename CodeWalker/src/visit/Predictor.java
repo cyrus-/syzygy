@@ -78,10 +78,12 @@ public class Predictor extends BaseVisitor {
 	}
 	
 	private boolean isLiteral(Expression exp) {
-		if ((exp instanceof NumberLiteral) || (exp instanceof BooleanLiteral) || (exp instanceof CharacterLiteral) || (exp instanceof NullLiteral) || (exp instanceof StringLiteral)) {
+		if ((exp instanceof NumberLiteral) || (exp instanceof StringLiteral)) {
 			return true;
-		} else if (exp instanceof Name) {
-		  return LiteralVisitor.isEnumLiteral((Name)exp);
+		} else if (exp instanceof SimpleName) {
+		  return LiteralVisitor.isEnumLiteral((SimpleName)exp);
+		} else if(exp instanceof QualifiedName) {
+			return LiteralVisitor.qualifiedNameIsEnum((QualifiedName)exp);
 		} else {
 			return false;
 		}
