@@ -291,6 +291,20 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 		
 		return 0;
 	}
+	
+	public int countAllFloats(ContextType typ) {
+		int total = 0;
+		
+		for(Float num : floatFrequencies.keySet()) {
+			Hashtable<Context.ContextType, Integer> table = floatFrequencies.get(num);
+			
+			if(table.containsKey(typ)) {
+				total += table.get(typ);
+			}
+		}
+		
+		return total;
+	}
 
 	public int countAllDoubles(ContextType typ) {
 		int total = 0;
@@ -376,5 +390,26 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 			}
 		}
 		return 0;
+	}
+	
+	public int getCount(TypeContext tctx)
+	{
+		String typName = tctx.fullTypeName;
+		Context.ContextType ctx = tctx.contextType;
+		if(typName == "int") {
+			return countAllInts(ctx);
+		} else if(typName == "float") {
+			return countAllFloats(ctx);
+		} else if(typName == "double") {
+			return countAllDoubles(ctx);
+		} else if(typName == "java.lang.String") {
+			return countAllStrings(ctx);
+		} else {
+			if(enumFrequencies.containsKey(typName)) {
+				return countEnumsOfType(typName, ctx);
+			}
+		}
+		return 0;
+		
 	}
 }

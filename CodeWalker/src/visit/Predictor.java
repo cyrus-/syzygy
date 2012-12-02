@@ -58,7 +58,6 @@ public class Predictor extends BaseVisitor {
 			  return getVars (offset, typ, node.getRoot());
 		  }
 		}
-		return 0;
 	}
 	
 	private double predVar(int offset, String t, ASTNode exp) {
@@ -80,6 +79,10 @@ public class Predictor extends BaseVisitor {
 		} else {
 			return false;
 		}
+	}
+	
+	private boolean isMethod(Expression exp) {
+		return exp instanceof MethodInvocation;
 	}
 	
 	private double predict (TypeContext t, Expression exp)
