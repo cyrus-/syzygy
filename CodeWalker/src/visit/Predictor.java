@@ -1,10 +1,14 @@
 package visit;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.Writer;
 import java.util.LinkedList;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
@@ -43,7 +47,7 @@ public class Predictor extends BaseVisitor {
 	private MethodVisitor methods;
 	private LinkedList<Double> accurancies = new LinkedList<Double>();
 	private File test_file = null;
-	
+	private BufferedWriter output_file_buffer = null;
 	
 	// Number of variables available in scope
 	private int getVars (int offset, String typ, ASTNode node) {
@@ -109,7 +113,7 @@ public class Predictor extends BaseVisitor {
 	private String dumpExpression(ASTNode node)
 	{
 		int start = node.getStartPosition();
-		String ret = node.toString();
+		String ret = node.toString().replace('\n', ' ').replace('\t', ' ');
 		
 		try {
 			final int LENGTH = 100;
@@ -173,10 +177,8 @@ public class Predictor extends BaseVisitor {
 			}
 			
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return "";
@@ -185,6 +187,16 @@ public class Predictor extends BaseVisitor {
 	private void dumpExpression1(ASTNode node)
 	{
 		String tokens = dumpExpression(node);
+		
+		try {
+			System.out.println("Wrote " + tokens);
+			output_file_buffer.write(tokens);
+			output_file_buffer.newLine();
+			output_file_buffer.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		//System.out.println(tokens);	
 	}
 	
@@ -352,10 +364,11 @@ public class Predictor extends BaseVisitor {
 		}
 	}
 	
-	public Predictor(LiteralVisitor _lit, VariableVisitor _variable, MethodVisitor _methods)
+	public Predictor(LiteralVisitor _lit, VariableVisitor _variable, MethodVisitor _methods, BufferedWriter buf)
 	{
 		lit = _lit;
 		variable = _variable;
 		methods = _methods;
+		output_file_buffer = buf;
 	}
 }

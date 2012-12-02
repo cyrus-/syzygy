@@ -23,7 +23,6 @@ public class VariableCounter extends ASTVisitor {
 	public VariableCounter(int o, String t) {
 		offset = o;
 		typ = t;
-		System.out.println("Finding variables of type " + t + " before offset " + o);
 	}
 	
 	private boolean correctType(ASTNode p) {
@@ -49,7 +48,6 @@ public class VariableCounter extends ASTVisitor {
 		
 		if (! names.contains(name)) {
 			count++;
-			System.out.println("Found variable " + name);
 			names.add(name);
 	      }		
 	}
