@@ -55,7 +55,7 @@ public class Predictor extends BaseVisitor {
 		  if (node.getRoot() == node) {
 			  return 0;
 		  } else {
-			  return getVars (offset, typ, node.getRoot());
+			  return getVars (offset, typ, node.getParent());
 		  }
 		}
 	}
