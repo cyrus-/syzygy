@@ -218,15 +218,10 @@ public class Predictor extends BaseVisitor {
 		
 		file.accept(this);
 		
-		if(accurancies.size() == 0)
-			return 1.0;
-		else {
-			Double sum = 0.0;
-			for(Double one : accurancies) {
-				sum = sum + one;
-			}
-			
-			return sum / (double)accurancies.size();
+		if (numPreds == 0) {
+			return 1;
+		} else {
+		  return totalProb / numPreds;
 		}
 	}
 	
