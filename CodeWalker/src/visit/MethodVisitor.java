@@ -46,6 +46,17 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		return (frequencies.get(t).get(m)/total); 
 	}*/
 	
+	public double getProb(TypeContext t, MethodInvocation m) {
+		// total number (used + unused) methods available of given return type
+		MethodCounter mctr = new MethodCounter(m.getStartPosition(), t.fullTypeName);
+		m.getRoot().accept(mctr);
+		
+		
+		
+		// p(unseen) * (1/ (mctr.getCount() - #ofseenmethods)) + (1 - p(unseen)) * (frequency of m / frequency of total)
+		return 0;
+	}
+	
 	
 	public int getCount (TypeContext t) {
 		return 0;

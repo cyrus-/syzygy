@@ -113,7 +113,7 @@ public class Predictor extends BaseVisitor {
 			totalProb += (numLit/total) * lit.getProb(t, exp);
 			numPreds++;
 		} else if (isMethod(exp)) {
-			totalProb += (numMethods/total) * methods.getProb(t, exp);
+			totalProb += (numMethods/total) * methods.getProb(t, (MethodInvocation)exp);
 			numPreds++;
 		} else if (isVariable(exp)) {
 			totalProb += (numVar/total) * predVar(exp.getStartPosition(), t.fullTypeName, exp);
