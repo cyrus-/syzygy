@@ -1,5 +1,10 @@
 package visit;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.LinkedList;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
@@ -37,6 +42,7 @@ public class Predictor extends BaseVisitor {
 	private VariableVisitor variable;
 	private MethodVisitor methods;
 	private LinkedList<Double> accurancies = new LinkedList<Double>();
+	private File test_file = null;
 	
 	
 	// Number of variables available in scope
@@ -52,6 +58,7 @@ public class Predictor extends BaseVisitor {
 			  return getVars (offset, typ, node.getRoot());
 		  }
 		}
+		return 0;
 	}
 	
 	private double predVar(int offset, String t, ASTNode exp) {
@@ -90,9 +97,91 @@ public class Predictor extends BaseVisitor {
 			return (numMethods/total) * methods.getProb(t, exp);
 		} else {
 			return (numVar/total) * predVar(exp.getStartPosition(), t.fullTypeName, exp);
-		}
+      }
+		return 0.0;
 	}
 	
+	private String dumpExpression(ASTNode node)
+	{
+		int start = node.getStartPosition();
+		String ret = node.toString();
+		
+		try {
+			final int LENGTH = 100;
+			int new_start, real_length;
+			FileInputStream fin = new FileInputStream(test_file);
+			long SIZE_FILE = test_file.length();
+			
+			if(start - LENGTH < 0) {
+				new_start = 0;
+				real_length = start;
+			} else {
+				new_start = start - LENGTH;
+				real_length = LENGTH;
+			}
+			if(new_start + real_length > SIZE_FILE) {
+				real_length = (int)SIZE_FILE - new_start;
+			}
+			
+			byte []data = new byte[real_length];
+			fin.skip(new_start);
+			
+			assert(new_start < SIZE_FILE);
+			assert(new_start >= 0);
+			assert(new_start + real_length < SIZE_FILE);
+			int total_read = fin.read(data, 0, real_length);
+
+			assert(total_read == real_length);
+			
+			boolean inside_whitespace = true;
+			int current_pos = real_length - 1;
+			String token1 = null;
+			String token2 = null;
+			int start_token = 0;
+			
+			while (current_pos >= 0) {
+				if(data[current_pos] == ' ' || data[current_pos] == '\t' || data[current_pos] == '\n') {
+					
+					if(!inside_whitespace) {
+						if(token1 == null) {
+							token1 = new String(data, current_pos + 1, start_token - current_pos);
+						} else {
+							token2 = new String(data, current_pos + 1, start_token - current_pos);
+							return token2 + " " + token1 + " " + ret;
+						}
+						inside_whitespace = true;
+					}
+					current_pos--;
+				} else {
+					if(inside_whitespace) {
+						inside_whitespace = false;
+						start_token = current_pos;
+					}
+					current_pos--;
+				}
+			}
+			
+			if(token1 != null) {
+				return token1 + " " + ret;
+			} else {
+				return ret;
+			}
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "";
+	}
+	
+	private void dumpExpression1(ASTNode node)
+	{
+		String tokens = dumpExpression(node);
+		System.out.println(tokens);	
+	}
 	
 	private void predictInt(int val, NumberLiteral literal)
 	{
@@ -101,6 +190,7 @@ public class Predictor extends BaseVisitor {
 		int countThisInt = lit.countInt(val, typ);
 		
 		//System.out.println("Count for all " + allInts + " for " + val + " " + countThisInt);
+		dumpExpression1(literal);
 		
 		if(allInts != 0) {
 			/// XXX what if == 0?
@@ -143,9 +233,8 @@ public class Predictor extends BaseVisitor {
 	
 	public boolean visit(QualifiedName qn)
 	{
-		if(!qn.getQualifier().isQualifiedName()) {
+		if(!qn.getQualifier().isQualifiedName())
 			return false;
-		}
 		
 		ITypeBinding typ = qn.resolveTypeBinding();
 		
@@ -157,6 +246,7 @@ public class Predictor extends BaseVisitor {
 		String typName = typ.getQualifiedName();
 		Context.ContextType ctx = Context.findContext(qn);
 		
+		dumpExpression1(qn);
 		predictEnum(typName, option, ctx);
 		
 		return false;
@@ -226,12 +316,15 @@ public class Predictor extends BaseVisitor {
 
 	public boolean visit(MethodInvocation mi)
 	{
+		dumpExpression1(mi);
 		return false;
 		
 	}
 	
-	public double test(JavaFile file)
+	public double test(JavaFile file, File underlying_file)
 	{
+		test_file = underlying_file;
+		
 		file.accept(this);
 		
 		if(accurancies.size() == 0)
