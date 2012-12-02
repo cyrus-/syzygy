@@ -13,6 +13,7 @@ public class Method implements Serializable {
 	private String name;
 	private String returnType;
 	private String []argumentTypes;
+	boolean isField = false;
 	
 	public boolean equal(Object obj)
 	{
@@ -44,26 +45,41 @@ public class Method implements Serializable {
 	
 	public String toString()
 	{
-		String base = returnType + " " + className + "." + name + "(";
+		String base = returnType + " " + className + "." + name;
 		
-		boolean first = true;
 		
-		for(String arg : argumentTypes) {
-			if(first) {
-				first = false;
-				base = base + arg;
-			} else
-				base = base + ", " + arg;
+		if(!isField) { 
+			base += "(";
+		
+			boolean first = true;
+		
+			for(String arg : argumentTypes) {
+				if(first) {
+					first = false;
+					base = base + arg;
+				} else
+					base = base + ", " + arg;
+			}
+		
+			base = base + ")";
 		}
 		
-		base = base + ")";
-		
 		return base;
+	}
+	
+	public Method(String _className, String _returnType, String _name)
+	{
+		className = _className;
+		returnType = _returnType;
+		name = _name;
+		argumentTypes = new String[0];
+		isField = true;
 	}
 	
 	public Method(IMethodBinding meth)
 	{
 		className = meth.getDeclaringClass().getQualifiedName();
+		
 		returnType = meth.getReturnType().getQualifiedName();
 		ITypeBinding []typs = meth.getParameterTypes();
 		name = meth.getName();

@@ -35,9 +35,10 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	private static MethodVisitor methods = null;
 	private static Random generator = new Random();
 	
-	private static final String PROJECT = "jfreechart";
+	private static final String PROJECT = "planet";
 
 	public SampleAction() {
+		
 	}
 	
 	private static void getAllFiles(File dir, LinkedList<File> ls)
@@ -110,7 +111,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			double thistotal = 0.0;
 			
 			for(File test : outls) {
-				double thisfile = pred.test(new JavaFile(test, prj));
+				double thisfile = pred.test(new JavaFile(test, prj), test);
 				thistotal += thisfile;
 				
 				System.out.println(test.getName() + " got " + thisfile);

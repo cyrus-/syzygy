@@ -3,11 +3,21 @@ package visit;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
 public class MethodVisitor extends BaseVisitor implements Serializable {
 	
@@ -16,6 +26,11 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 	private Hashtable<TypeContext, Hashtable<Method, Integer>> frequencies = new Hashtable<TypeContext, Hashtable<Method, Integer> >();
 	private Hashtable<String, ArrayList<Method>> methods = new Hashtable<String, ArrayList<Method>>();
 	
+	// temporary
+	private List<IBinding> member_bindings = null;
+	private String thisClassName = null;
+	
+	/*
 	public double getProb (TypeContext t, Expression exp) {
 		Method m = toMethod(exp);
 		
@@ -26,14 +41,14 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		
 		return (frequencies.get(t).get(m)/total); 
 	}
+	*/
 	
 	private Method findMethod(IMethodBinding meth)
 	{
 		ITypeBinding cl = meth.getDeclaringClass();
 		
-		if(cl == null) {
+		if(cl == null)
 			return null;
-		}
 		
 		String className = cl.getQualifiedName();
 		
@@ -62,6 +77,85 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		}
 	}
 	
+	public boolean visit(FieldDeclaration fd)
+	{
+		List frags = fd.fragments();
+		
+		for(Object frag : frags) {
+			if(frag instanceof VariableDeclarationFragment) {
+				if((fd.getModifiers() & Modifier.PUBLIC) != 0) {
+					VariableDeclarationFragment fragment = (VariableDeclarationFragment)frag;
+					member_bindings.add(fragment.getName().resolveBinding());
+					
+					TypeDeclaration tdecl = (TypeDeclaration)fd.getParent();
+					ITypeBinding typ = tdecl.resolveBinding();
+					if(typ != null && thisClassName == null) {
+						thisClassName = typ.getQualifiedName();
+					}
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	public boolean visit(CompilationUnit unit)
+	{
+		member_bindings = new LinkedList<IBinding>();
+		thisClassName = null;
+		return true;
+	}
+	
+	private boolean isMemberBinding(IBinding b)
+	{
+		for(IBinding member : member_bindings) {
+			if(b.equals(member)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean visit(QualifiedName qn)
+	{
+		IBinding bind = qn.resolveBinding();
+		
+		//System.out.println("qualified " + qn);
+		if(bind != null && isMemberBinding(bind)) {
+			//System.out.println("Member " + qn);
+		} else {
+			ITypeBinding typ = qn.resolveTypeBinding();
+			if(typ == null) {
+				return false;
+			}
+			ITypeBinding cls = typ.getDeclaringClass();
+			
+			if(cls != null && cls.isClass()) {
+				//System.out.println(qn.getName() + " It is a class " + cls.getName());
+			} else {
+				//System.out.println("cls " + cls.getName());
+			}
+		}
+		
+		return false;
+	}
+	
+	public boolean visit(SimpleName name)
+	{
+		IBinding bind = name.resolveBinding();
+		ITypeBinding typ = name.resolveTypeBinding();
+		
+		if(bind != null && !name.isDeclaration() && isMemberBinding(bind)) {
+			TypeContext tctx = new TypeContext(typ.getQualifiedName(), name);
+			assert(thisClassName != null);
+			Method method = new Method(thisClassName, typ.getQualifiedName(), name.getFullyQualifiedName());
+			
+			addMethod(tctx, method);
+		}
+		
+		return false;
+	}
+	
 	public boolean visit(MethodInvocation mi)
 	{
 		ITypeBinding bind = mi.resolveTypeBinding();
@@ -79,6 +173,13 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		if(method == null)
 			return true;
 		
+		addMethod(tctx, method);
+		
+		return true;
+	}
+	
+	public void addMethod(TypeContext tctx, Method method)
+	{
 		if(frequencies.containsKey(tctx)) {	
 			Hashtable<Method, Integer> inner_table = frequencies.get(tctx);
 			if(inner_table.containsKey(method)) {
@@ -91,8 +192,6 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 			inner_table.put(method, 1);
 			frequencies.put(tctx, inner_table);
 		}
-		
-		return true;
 	}
 	
 	public void print()
