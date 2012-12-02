@@ -105,20 +105,30 @@ public class Predictor extends BaseVisitor {
 		int numVar = variable.getCount(t);
 		int numMethods = methods.getCount(t);
 		int total = numLit + numMethods + numVar;
+		double thisProb = 0.0;
 		
+		if(total == 0) {
+			return;
+		}
 		
-		String foo;
+		dumpExpression(exp);
 		
 		if (isLiteral(exp)) {
-			totalProb += (numLit/total) * lit.getProb(t, exp);
+			thisProb = ((double)numLit/(double)total) * lit.getProb(t, exp);
+			//System.out.println(exp + " ====> " + numLit + " " + total + " " + lit.getProb(t,  exp) + " " + thisProb);
 			numPreds++;
 		} else if (isMethod(exp)) {
-			totalProb += (numMethods/total) * methods.getProb(t, exp);
-			numPreds++;
+			//thisProb = (numMethods/total) * methods.getProb(t, exp);
+			thisProb = 1.0;
+			return;
+			//numPreds++;
 		} else if (isVariable(exp)) {
-			totalProb += (numVar/total) * predVar(exp.getStartPosition(), t.fullTypeName, exp);
-			numPreds++;
+			thisProb = (numVar/total) * predVar(exp.getStartPosition(), t.fullTypeName, exp);
+			return;
+			//numPreds++;
 		}
+		
+		totalProb += thisProb;
 	}
 	
 	public void preVisit (ASTNode node) {
@@ -129,7 +139,6 @@ public class Predictor extends BaseVisitor {
 			
 			if (typ != null) {
 				predict(new TypeContext(typ.getQualifiedName(), Context.findContext(node)), exp);
-				dumpExpression(node);
 			}
 		}
 	}
