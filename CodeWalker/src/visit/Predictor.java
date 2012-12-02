@@ -2,6 +2,8 @@ package visit;
 
 import java.util.LinkedList;
 
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -20,6 +22,43 @@ public class Predictor extends BaseVisitor {
 	private VariableVisitor variable;
 	private MethodVisitor methods;
 	private LinkedList<Double> accurancies = new LinkedList<Double>();
+	
+	
+	private int getVars (ASTNode node) {
+		p = node.getParent();
+		
+		if (p instanceof Block) {
+			Block b = (Block)p;
+			b.statements()
+		}
+	}
+	
+	private double predVar(String t) {
+		int num = 1;
+		String foo = "Asa";
+	    return 0;
+	}
+	
+	
+	
+	private double predict (TypeContext t, Expression exp)
+	{
+		int numLit = lit.count(t);
+		int numVar = variable.count(t);
+		int numMethods = methods.count(t);
+		int total = numLit + numMethods + numVar;
+		
+		String foo;
+		
+		if (isLiteral(exp)) {
+			return (numLit/total) * lit.getProb(t, exp);
+		} else if (isMethod(exp)) {
+			return (numMethods/total) * methods.getProb(t, exp);
+		} else {
+			return (numVar/total) * predVar(t.fullTypeName);
+		}
+	}
+	
 	
 	private void predictInt(int val, NumberLiteral literal)
 	{

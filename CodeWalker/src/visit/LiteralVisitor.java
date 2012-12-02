@@ -24,6 +24,8 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	private Hashtable<String, Hashtable<String, Hashtable<Context.ContextType, Integer> > > enumFrequencies = new Hashtable<String, Hashtable<String, Hashtable<Context.ContextType, Integer> > >();
 	private Hashtable<String, Hashtable<Context.ContextType, Integer> > stringFrequencies = new Hashtable<String, Hashtable<Context.ContextType, Integer> >();
 	
+	
+	
 	public boolean visit(NumberLiteral literal)
 	{
 		String typ = null;

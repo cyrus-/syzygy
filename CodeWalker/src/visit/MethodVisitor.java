@@ -3,6 +3,7 @@ package visit;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Map.Entry;
 
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -14,6 +15,17 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 	
 	private Hashtable<TypeContext, Hashtable<Method, Integer>> frequencies = new Hashtable<TypeContext, Hashtable<Method, Integer> >();
 	private Hashtable<String, ArrayList<Method>> methods = new Hashtable<String, ArrayList<Method>>();
+	
+	public double getProb (TypeContext t, Expression exp) {
+		Method m = toMethod(exp);
+		
+		int total = 0;
+		for (Entry<Method, Integer> e : frequencies.get(t).entrySet()) {
+			total += e.getValue();
+		}
+		
+		return (frequencies.get(t).get(m)/total); 
+	}
 	
 	private Method findMethod(IMethodBinding meth)
 	{

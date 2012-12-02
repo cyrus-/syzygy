@@ -7,8 +7,8 @@ import org.eclipse.jdt.core.dom.ASTNode;
 public class TypeContext implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
-	private String fullTypeName;
-	private Context.ContextType contextType;
+	public String fullTypeName;
+	public Context.ContextType contextType;
 	
 	public String toString()
 	{
