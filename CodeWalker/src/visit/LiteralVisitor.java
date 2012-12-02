@@ -8,6 +8,7 @@ import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -93,36 +94,29 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 		return false;
 	}
 	
-	public boolean visit(SimpleName name)
-	{
+	public static boolean isEnumLiteral (Name name) {
 		ITypeBinding typ = name.resolveTypeBinding();
-		IBinding bind = name.resolveBinding();
 		
-		if(typ == null)
-			return false;
-		if(bind == null)
-			return false;
+		if (typ == null) return false;
 		
 		if(name.getParent() instanceof EnumDeclaration || name.getParent() instanceof EnumConstantDeclaration) {
 			return false;
 		}
 		
 		if(typ.isEnum()) {
-			String typName = typ.getQualifiedName();
 			String option = name.toString();
-
-			boolean inThere = false;
 			
 			for(IVariableBinding b : typ.getDeclaredFields()) {
-				if(b.getName().equals(option)) {
-					inThere = true;
-					break;
-				}
+				if(b.getName().equals(option)) return true;
 			}
-			
-			if(inThere) {
-				addEnum(typName, option, Context.findContext(name));
-			}
+		}
+		return false;
+	}
+	
+	public boolean visit(SimpleName name)
+	{
+		if (LiteralVisitor.isEnumLiteral(name)) {
+			addEnum(name.resolveTypeBinding().getQualifiedName(), name.toString(), Context.findContext(name));
 		}
 		
 		return false;
