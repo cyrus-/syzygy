@@ -441,6 +441,7 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	public double getProb(TypeContext t, Expression exp) {
 		if(t.fullTypeName.equals("int")) {
 			NumberLiteral lit = (NumberLiteral)exp;
+			
 			int val = Integer.parseInt(lit.getToken());
 			int total = countAllInts(t.contextType);
 			
@@ -495,6 +496,9 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 			} else {
 				assert(false);
 			}
+			
+			if(typName == null)
+				return 0.0;
 			
 			int total = countEnumsOfType(typName, t.contextType);
 			

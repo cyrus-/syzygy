@@ -51,6 +51,10 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		
 		Method m = new Method(mi, mi.resolveMethodBinding());
 		
+		if(!frequencies.containsKey(t)) {
+			return 0.0;
+		}
+		
 		Hashtable<Method, Integer> table = frequencies.get(t);
 
 		int total = 0;
@@ -281,6 +285,9 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		IVariableBinding var = (IVariableBinding)bind;
 		ITypeBinding cls = var.getDeclaringClass();
 		
+		if(cls == null)
+			return null;
+		
 		String name = qn.getFullyQualifiedName();
 		
 		return new Method(qn, cls.getQualifiedName(), typ.getQualifiedName(), name);
@@ -291,7 +298,8 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		if(isPublicField(qn)) {
 			Method method = getPublicFieldAsMethod(qn);
 			
-			addMethod(method);
+			if(method != null)
+				addMethod(method);
 		}
 		return false;
 	}

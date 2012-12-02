@@ -6,6 +6,7 @@ import java.util.Set;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
@@ -30,10 +31,19 @@ public class VariableCounter extends ASTVisitor {
 		  return false;
       } else {
 		  if (p instanceof VariableDeclarationExpression) {
-			  String t = ((VariableDeclarationExpression)p).getType().resolveBinding().getQualifiedName();
+			  ITypeBinding bind = ((VariableDeclarationExpression)p).getType().resolveBinding();
+			  if(bind == null)
+				  return false;
+			  
+			  String t = bind.getQualifiedName();
 			  return (t.equals(typ));
 		  } else if (p instanceof VariableDeclarationStatement) {
-			  String t = ((VariableDeclarationStatement)p).getType().resolveBinding().getQualifiedName();
+			  ITypeBinding bind = ((VariableDeclarationStatement)p).getType().resolveBinding();
+			  
+			  if(bind == null)
+				  return false;
+			  
+			  String t = bind.getQualifiedName();
 			  return (t.equals(typ));
 		  } else {
 			  System.out.println("shit some other type of variable declaration");

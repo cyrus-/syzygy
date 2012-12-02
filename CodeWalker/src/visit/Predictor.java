@@ -114,20 +114,24 @@ public class Predictor extends BaseVisitor {
 		dumpExpression(exp);
 		
 		if (isLiteral(exp)) {
-			thisProb = ((double)numLit/(double)total) * lit.getProb(t, exp);
-			//System.out.println(exp + " ====> " + numLit + " " + total + " " + lit.getProb(t,  exp) + " " + thisProb);
-			numPreds++;
+			try {
+				thisProb = ((double)numLit/(double)total) * lit.getProb(t, exp);
+				//System.out.println(exp + " ====> " + numLit + " " + total + " " + lit.getProb(t,  exp) + " " + thisProb);
+				numPreds++;
+			} catch(java.lang.NumberFormatException e) {
+				return;
+			}
 		} else if (isMethod(exp)) {
 			double p = methods.getProb(t, (MethodInvocation)exp);
 			
 			if (p < 0) return;
 			
-			totalProb += (numMethods/total) * p;
+			totalProb += ((double)numMethods/(double)total) * p;
 			numPreds++;
 		} else if (isVariable(exp)) {
-			thisProb = (numVar/total) * predVar(exp.getStartPosition(), t.fullTypeName, exp);
-			return;
-			//numPreds++;
+			//System.out.println("VAR " + exp + " numVar:" + numVar + " total:" + total + " predVar:" + predVar(exp.getStartPosition(), t.fullTypeName, exp));
+			thisProb = ((double)numVar/(double)total) * predVar(exp.getStartPosition(), t.fullTypeName, exp);
+			numPreds++;
 		}
 		
 		totalProb += thisProb;
