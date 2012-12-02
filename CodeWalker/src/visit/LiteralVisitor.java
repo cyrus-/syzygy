@@ -386,6 +386,9 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	public int countEnumsOfType(String typName, ContextType ctx) {
 		int total = 0;
 		
+		assert(typName != null);
+		assert(enumFrequencies != null);
+		
 		if(enumFrequencies.containsKey(typName)) {
 			Hashtable<String, Hashtable<Context.ContextType, Integer> > table = enumFrequencies.get(typName);
 			
@@ -439,29 +442,46 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	}
 
 	public double getProb(TypeContext t, Expression exp) {
-		if(t.equals("int")) {
+		if(t.fullTypeName.equals("int")) {
 			NumberLiteral lit = (NumberLiteral)exp;
 			int val = Integer.parseInt(lit.getToken());
+			int total = countAllInts(t.contextType);
 			
-			return (double)countInt(val, t.contextType) / (double)countAllInts(t.contextType);
-		} else if(t.equals("float")) {
+			if(total == 0)
+				return 0.0;
+			
+			return (double)countInt(val, t.contextType) / (double)total;
+		} else if(t.fullTypeName.equals("float")) {
 			NumberLiteral lit = (NumberLiteral)exp;
 			float val = Float.parseFloat(lit.getToken());
+			int total = countAllFloats(t.contextType);
 			
-			return (double)countFloat(val, t.contextType) / (double)countAllFloats(t.contextType);
-		} else if(t.equals("double")) {
+			if(total == 0)
+				return 0.0;
+			
+			return (double)countFloat(val, t.contextType) / (double)total;
+		} else if(t.fullTypeName.equals("double")) {
 			NumberLiteral lit = (NumberLiteral)exp;
 			double val = Double.parseDouble(lit.getToken());
+			int total = countAllDoubles(t.contextType);
 			
-			return (double)countDouble(val, t.contextType) / (double)countAllDoubles(t.contextType);
-		} else if(t.equals("java.lang.String")) {
+			if(total == 0)
+				return 0.0;
+			
+			return (double)countDouble(val, t.contextType) / (double)total;
+		} else if(t.fullTypeName.equals("java.lang.String")) {
 			StringLiteral lit = (StringLiteral)exp;
 			String val = lit.getLiteralValue();
+			int total = countAllStrings(t.contextType);
 			
-			return (double)countString(val, t.contextType) / (double)countAllStrings(t.contextType);
+			if(total == 0)
+				return 0.0;
+			
+			return (double)countString(val, t.contextType) / (double)total;
 		} else {
 			String typName = null;
 			String option = null;
+			
 			if(exp instanceof SimpleName) {
 				SimpleName name = (SimpleName)exp;
 				
@@ -479,9 +499,12 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 				assert(false);
 			}
 			
-			double total = (double)countEnumsOfType(typName, t.contextType);
+			int total = countEnumsOfType(typName, t.contextType);
 			
-			return (double)countEnumsOfTypeWithOption(typName, option, t.contextType) / total;
+			if(total == 0)
+				return 0.0;
+			
+			return (double)countEnumsOfTypeWithOption(typName, option, t.contextType) / (double)total;
 		}
 	}
 }
