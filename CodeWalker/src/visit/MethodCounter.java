@@ -44,19 +44,22 @@ public class MethodCounter extends ASTVisitor {
 			
 			for (IMethod m : meths) {
 				int f = m.getFlags();
-				if (pubCheck && (! (Flags.isPublic(f)))) {
-					 continue;
-				} else if
-					((Flags.isPublic(f)) || 
+				boolean test = false;
+			
+				if (pubCheck) {
+					test = Flags.isPublic(f);
+				} else {
+					test = ((Flags.isPublic(f)) || 
 				     (Flags.isProtected(f)) || 
-				     ((t.getFullyQualifiedName().equals(tp.getFullyQualifiedName())) && (!pubCheck))) { 
-				if ((m.getReturnType().equals(typ))) {
+				     ((t.getFullyQualifiedName().equals(tp.getFullyQualifiedName())))); 
+			    }
+				
+				if (test && (m.getReturnType().equals(typ))) {
 					StringBuilder fullname = new StringBuilder();
 					fullname.append(m.getDeclaringType().getFullyQualifiedName());
 					fullname.append(".");
 					fullname.append(m.getElementName());
 					names.add(fullname.toString());
-				}
 				}
 			}
 		} catch (JavaModelException e) {

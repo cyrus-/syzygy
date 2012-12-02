@@ -46,6 +46,39 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		return (frequencies.get(t).get(m)/total); 
 	}*/
 	
+	public double getProb(TypeContext t, MethodInvocation mi) {
+		// total number (used + unused) methods available of given return type
+		
+		Method m = new Method(mi, mi.resolveMethodBinding());
+		
+		Hashtable<Method, Integer> table = frequencies.get(t);
+
+		int total = 0;
+		for (Entry<Method, Integer> e : table.entrySet()) {
+			total += e.getValue();
+		}
+		int numseen = table.size();
+		
+		if (total == 0) return -1;
+		
+		if (table.containsKey(m)) {
+			// seen method
+			return (1 - (numseen/total)) * (table.get(m).intValue()/total);
+		} else {
+			// unseen method
+			MethodCounter mctr = new MethodCounter(mi.getStartPosition(), t.fullTypeName);
+			mi.getRoot().accept(mctr);
+			
+			int tmp = (mctr.getCount() - numseen);
+			
+			if (tmp == 0) {
+				return -1;
+			} else {
+			  return (numseen/total) * (1/tmp);
+			}
+		}
+	}
+	
 	
 	public int getCount (TypeContext t) {
 		int total = 0;
@@ -302,7 +335,7 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		
 		return true;
 	}
-	
+
 	public boolean visit(MethodInvocation mi)
 	{
 		ITypeBinding bind = mi.resolveTypeBinding();
