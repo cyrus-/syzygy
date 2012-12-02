@@ -1,6 +1,7 @@
 package visit;
 
 import java.util.LinkedList;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Block;
@@ -29,12 +30,18 @@ public class Predictor extends BaseVisitor {
 	private LinkedList<Double> accurancies = new LinkedList<Double>();
 	
 	
-	private int getVars (ASTNode node) {
-		p = node.getParent();
-		
-		if (p instanceof Block) {
-			Block b = (Block)p;
-			b.statements()
+	// Number of variables available in scope
+	private int getVars (int offset, String typ, ASTNode node) {
+		if (node instanceof MethodDeclaration) {
+			VariableCounter vc = new VariableCounter(offset, typ);
+			node.accept(vc);
+			return vc.getCount();
+		} else {
+		  if (node.getRoot() == node) {
+			  return 0;
+		  } else {
+			  return getVars (offset, typ, node.getRoot());
+		  }
 		}
 	}
 	

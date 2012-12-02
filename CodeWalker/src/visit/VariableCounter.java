@@ -10,17 +10,16 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
-import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
 public class VariableCounter extends ASTVisitor {
 	
 	private int offset;
 	private int count = 0;
-	private Type typ;
+	private String typ;
 	private Set<SimpleName> names = new HashSet<SimpleName>();
 	
-	public VariableCounter(int o, Type t) {
+	public VariableCounter(int o, String t) {
 		offset = o;
 		typ = t;
 	}
@@ -30,10 +29,10 @@ public class VariableCounter extends ASTVisitor {
 		  return false;
       } else {
 		  if (p instanceof VariableDeclarationExpression) {
-			  Type t = ((VariableDeclarationExpression)p).getType();
+			  String t = ((VariableDeclarationExpression)p).getType().resolveBinding().getQualifiedName();
 			  return (t.equals(typ));
 		  } else if (p instanceof VariableDeclarationStatement) {
-			  Type t = ((VariableDeclarationStatement)p).getType();
+			  String t = ((VariableDeclarationStatement)p).getType().resolveBinding().getQualifiedName();
 			  return (t.equals(typ));
 		  } else {
 			  System.out.println("shit some other type of variable declaration");
