@@ -72,7 +72,6 @@ public class Predictor extends BaseVisitor {
 		}
 	}
 	
-<<<<<<< Updated upstream
 	private boolean isLiteral(Expression exp) {
 		if ((exp instanceof NumberLiteral) || (exp instanceof BooleanLiteral) || (exp instanceof CharacterLiteral) || (exp instanceof NullLiteral) || (exp instanceof StringLiteral)) {
 			return true;
