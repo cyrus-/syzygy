@@ -32,34 +32,40 @@ public class VariableVisitor extends BaseVisitor implements Serializable {
 		return false;
 	}
 	
-	public boolean visit(SimpleName name)
-	{
-		if(!name.isDeclaration()) {
+	public static boolean isVar(SimpleName name) {
+		if(!name.isDeclaration() && !LiteralVisitor.isEnumLiteral(name)) {
 			IBinding bind = name.resolveBinding();
 			ITypeBinding typ = name.resolveTypeBinding();
-			
 			if(bind == null) {
 				//System.err.println("Could not resolve binding of " + name + " " + name.getParent().getParent().getParent().getClass());
-				return true;
+				return false;
 			}
 			
 			if(typ == null) {
 				//System.err.println("Could not resolve binding of " + name + " " + name.getParent().getParent().getParent().getClass());
-				return true;
+				return false;
 			}
 			
-			if(bind.getKind() == IBinding.VARIABLE && !typ.isEnum()) {
-				String typName = typ.getQualifiedName();
-				TypeContext tctx = new TypeContext(typName, name);
-				if(frequencies.containsKey(tctx)) {
-					frequencies.put(tctx, frequencies.get(tctx) + 1);
-				} else {
-					frequencies.put(tctx, 1);
-				}
+			if(bind.getKind() == IBinding.VARIABLE) {
+				return true;
 			}
 		}
-
 		return false;
+	}
+		
+	
+	public boolean visit(SimpleName name)
+	{
+		if (VariableVisitor.isVar(name)) {
+			String typName = typ.getQualifiedName();
+			TypeContext tctx = new TypeContext(typName, name);
+			if(frequencies.containsKey(tctx)) {
+				frequencies.put(tctx, frequencies.get(tctx) + 1);
+			} else {
+				frequencies.put(tctx, 1);
+			}	
+			return false;
+		} else 	return true;
 	}
 	
 	public void print()

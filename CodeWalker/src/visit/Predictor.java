@@ -41,7 +41,9 @@ public class Predictor extends BaseVisitor {
 	private LiteralVisitor lit;
 	private VariableVisitor variable;
 	private MethodVisitor methods;
-	private LinkedList<Double> accurancies = new LinkedList<Double>();
+	private double totalProb = 0;
+	private int numPreds = 0; 
+	
 	private File test_file = null;
 	
 	
@@ -55,7 +57,7 @@ public class Predictor extends BaseVisitor {
 		  if (node.getRoot() == node) {
 			  return 0;
 		  } else {
-			  return getVars (offset, typ, node.getRoot());
+			  return getVars (offset, typ, node.getParent());
 		  }
 		}
 	}
@@ -85,7 +87,13 @@ public class Predictor extends BaseVisitor {
 		return exp instanceof MethodInvocation;
 	}
 	
-	private double predict(TypeContext t, Expression exp)
+	private boolean isVariable(Expression exp) {
+		if (exp instanceof SimpleName) {
+			return VariableVisitor.isVar((SimpleName)exp);
+		} else return false;
+	}
+	
+	private void predict(TypeContext t, Expression exp)
 	{
 		int numLit = lit.getCount(t);
 		int numVar = variable.getCount(t);
@@ -96,16 +104,31 @@ public class Predictor extends BaseVisitor {
 		String foo;
 		
 		if (isLiteral(exp)) {
-			//return (numLit/total) * lit.getProb(t, exp);
+			totalProb += (numLit/total) * lit.getProb(t, exp);
+			numPreds++;
 		} else if (isMethod(exp)) {
-			//return (numMethods/total) * methods.getProb(t, exp);
-		} else {
-			//return (numVar/total) * predVar(exp.getStartPosition(), t.fullTypeName, exp);
-      
+			totalProb += (numMethods/total) * methods.getProb(t, exp);
+			numPreds++;
+		} else if (isVariable(exp)) {
+			totalProb += (numVar/total) * predVar(exp.getStartPosition(), t.fullTypeName, exp);
+			numPreds++;
 		}
-		return 0.0;
 	}
 	
+	public void preVisit (ASTNode node) {
+		if (node instanceof Expression) {
+			Expression exp = (Expression)node;
+			
+			ITypeBinding typ = exp.resolveTypeBinding();
+			
+			if (typ != null) {
+				predict(new TypeContext(typ.getQualifiedName(), Context.findContext(node)), exp);
+				dumpExpression(node);
+			}
+		}
+	}
+	
+
 	private String dumpExpression(ASTNode node)
 	{
 		int start = node.getStartPosition();
@@ -188,151 +211,6 @@ public class Predictor extends BaseVisitor {
 		//System.out.println(tokens);	
 	}
 	
-	private void predictInt(int val, NumberLiteral literal)
-	{
-		Context.ContextType typ = Context.findContext(literal);
-		int allInts = lit.countAllInts(typ);
-		int countThisInt = lit.countInt(val, typ);
-		
-		//System.out.println("Count for all " + allInts + " for " + val + " " + countThisInt);
-		dumpExpression1(literal);
-		
-		if(allInts != 0) {
-			/// XXX what if == 0?
-			double acc = (double)countThisInt / (double)allInts;
-			accurancies.add(acc);
-		}
-	}
-	
-	private void predictDouble(double val, NumberLiteral literal)
-	{
-		Context.ContextType typ = Context.findContext(literal);
-		int allDoubles = lit.countAllDoubles(typ);
-		int countThisDouble = lit.countDouble(val, typ);
-		
-		//System.out.println(val + " all " + allDoubles + " " + countThisDouble);
-		
-		if(allDoubles != 0) {
-			double acc = (double)countThisDouble / (double)allDoubles;
-			
-			accurancies.add(acc);
-		}
-	}
-	
-	public boolean visit(NumberLiteral literal)
-	{
-		try {
-			final int val = Integer.parseInt(literal.getToken());
-			predictInt(val, literal);
-		} catch(final Exception e1) {
-			try {
-				final double val = Double.parseDouble(literal.getToken());
-				predictDouble(val, literal);
-			} catch(final Exception e2) {
-				// we do nothing
-			}
-		}
-		
-		return false;
-	}
-	
-	public boolean visit(QualifiedName qn)
-	{
-		if(!qn.getQualifier().isQualifiedName())
-			return false;
-		
-		ITypeBinding typ = qn.resolveTypeBinding();
-		
-		if(typ == null) {
-			return false;
-		}
-		
-		String option = qn.getName().toString();
-		String typName = typ.getQualifiedName();
-		Context.ContextType ctx = Context.findContext(qn);
-		
-		dumpExpression1(qn);
-		predictEnum(typName, option, ctx);
-		
-		return false;
-	}
-	
-	public boolean visit(StringLiteral litstr)
-	{
-		Context.ContextType ctx = Context.findContext(litstr);
-		String val = litstr.getLiteralValue();
-		int countAllStrings = lit.countAllStrings(ctx);
-		int countThisString = lit.countString(val, ctx);
-		
-		//System.out.println(val + " all " + countAllStrings + " " + countThisString);
-		
-		if(countAllStrings != 0) {
-			accurancies.add((double)countThisString / (double)countAllStrings);
-		}
-		
-		return false;
-	}
-	
-	public boolean visit(SimpleName name)
-	{
-		ITypeBinding typ = name.resolveTypeBinding();
-		IBinding bind = name.resolveBinding();
-		
-		if(typ == null)
-			return false;
-		if(bind == null)
-			return false;
-		
-		if(name.getParent() instanceof EnumDeclaration || name.getParent() instanceof EnumConstantDeclaration) {
-			return false;
-		}
-		
-		if(typ.isEnum()) {
-			String typName = typ.getQualifiedName();
-			String option = name.toString();
-
-			boolean inThere = false;
-			
-			for(IVariableBinding b : typ.getDeclaredFields()) {
-				if(b.getName().equals(option)) {
-					inThere = true;
-					break;
-				}
-			}
-			
-			if(inThere) {
-				predictEnum(typName, option, Context.findContext(name));
-				return false;
-			}
-		}
-		
-		if(!name.isDeclaration() && bind.getKind() == IBinding.VARIABLE) {
-			// variables
-			String typName = typ.getQualifiedName();
-			TypeContext tctx = new TypeContext(typName, name);
-			predict(tctx, name);
-		}
-		
-		return false;
-	}
-	
-	private void predictEnum(String typName, String option, ContextType ctx) {
-		int allThisType = lit.countEnumsOfType(typName, ctx);
-		int thisOption = lit.countEnumsOfTypeWithOption(typName, option, ctx);
-	
-		System.out.println(typName + " " + option + " " + thisOption + "/" + allThisType + " " + ctx);
-		
-		if(allThisType != 0) {
-			accurancies.add((double)thisOption / (double)allThisType);
-		}
-	}
-
-	public boolean visit(MethodInvocation mi)
-	{
-		dumpExpression1(mi);
-		return false;
-		
-	}
 	
 	public double test(JavaFile file, File underlying_file)
 	{
