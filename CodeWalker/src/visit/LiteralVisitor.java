@@ -3,12 +3,16 @@ package visit;
 import java.io.Serializable;
 import java.util.Hashtable;
 
+import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
+import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StringLiteral;
+import org.eclipse.jdt.internal.compiler.lookup.VariableBinding;
 
 import visit.Context.ContextType;
 
@@ -28,7 +32,7 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	
 	public boolean visit(NumberLiteral literal)
 	{
-		String typ = null;
+		ITypeBinding typ = literal.resolveTypeBinding();
 		
 		if(typ == null) {
 			try {
@@ -42,17 +46,17 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 				} catch(final Exception e2) {
 				}
 			}
-		} else if(typ.equals("int")) {
+		} else if(typ.getName().equals("int")) {
 			try {
 				int num = Integer.parseInt(literal.getToken());
 				addInteger(num, literal);
 			} catch(final Exception e1) {
 				
 			}
-		} else if(typ.equals("double")) {
+		} else if(typ.getName().equals("double")) {
 			double num = Double.parseDouble(literal.getToken());
 			addDouble(num, literal);
-		} else if(typ.equals("float")) {
+		} else if(typ.getName().equals("float")) {
 			float num = Float.parseFloat(literal.getToken());
 			addFloat(num, literal);
 		}
@@ -69,6 +73,12 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 		String option = qn.getName().toString();
 		String typName = qn.getQualifier().getFullyQualifiedName().toString();
 		Context.ContextType ctx = Context.findContext(qn);
+		
+		ITypeBinding typ = qn.resolveTypeBinding();
+		if(typ == null)
+			return false;
+		
+		typName = typ.getQualifiedName();
 		
 		addEnum(typName, option, ctx);
 		return false;
@@ -93,15 +103,32 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 		if(bind == null)
 			return false;
 		
-		if(typ.isEnum() && bind.getKind() == IBinding.VARIABLE && !name.isDeclaration()) {
-			addEnum(typ.getQualifiedName(), name.toString(), Context.findContext(name));
+		if(name.getParent() instanceof EnumDeclaration || name.getParent() instanceof EnumConstantDeclaration) {
+			return false;
+		}
+		
+		if(typ.isEnum()) {
+			String typName = typ.getQualifiedName();
+			String option = name.toString();
+
+			boolean inThere = false;
+			
+			for(IVariableBinding b : typ.getDeclaredFields()) {
+				if(b.getName().equals(option)) {
+					inThere = true;
+					break;
+				}
+			}
+			
+			if(inThere) {
+				addEnum(typName, option, Context.findContext(name));
+			}
 		}
 		
 		return false;
 	}
 	
 	private void addEnum(String typName, String option, Context.ContextType ctx) {
-		System.out.println(typName + "." + option);
 		if(enumFrequencies.containsKey(typName)) {
 			Hashtable<String, Hashtable<Context.ContextType, Integer> > innerTable = enumFrequencies.get(typName);
 			if(innerTable.containsKey(option)) {
@@ -122,7 +149,6 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 			innerTable.put(option, table);
 			enumFrequencies.put(typName, innerTable);
 		}
-		
 	}
 
 	private void addDouble(double num, NumberLiteral lit) {
@@ -347,7 +373,7 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 		if(enumFrequencies.containsKey(typName)) {
 			Hashtable<String, Hashtable<Context.ContextType, Integer> > table = enumFrequencies.get(typName);
 			
-			if(table.contains(option)) {
+			if(table.containsKey(option)) {
 				Hashtable<Context.ContextType, Integer> inner = table.get(option);
 				
 				if(inner.containsKey(ctx)) {

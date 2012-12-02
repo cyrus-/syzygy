@@ -16,8 +16,7 @@ public class VariableVisitor extends BaseVisitor implements Serializable {
 	
 	private Hashtable<TypeContext, Integer> frequencies = new Hashtable<TypeContext, Integer>();
 	
-	public Integer getCount(TypeContext tctx)
-	{
+	public Integer getCount(TypeContext tctx) {
 		if(frequencies.containsKey(tctx)) {
 			return frequencies.get(tctx);
 		} else {
@@ -25,13 +24,11 @@ public class VariableVisitor extends BaseVisitor implements Serializable {
 		}
 	}
 	
-	public boolean visit(ImportDeclaration decl)
-	{
+	public boolean visit(ImportDeclaration decl) {
 		return false;
 	}
 	
-	public boolean visit(PackageDeclaration unit)
-	{
+	public boolean visit(PackageDeclaration unit) {
 		return false;
 	}
 	
@@ -42,12 +39,12 @@ public class VariableVisitor extends BaseVisitor implements Serializable {
 			ITypeBinding typ = name.resolveTypeBinding();
 			
 			if(bind == null) {
-				System.err.println("Could not resolve binding of " + name + " " + name.getParent().getParent().getParent().getClass());
+				//System.err.println("Could not resolve binding of " + name + " " + name.getParent().getParent().getParent().getClass());
 				return true;
 			}
 			
 			if(typ == null) {
-				System.err.println("Could not resolve binding of " + name + " " + name.getParent().getParent().getParent().getClass());
+				//System.err.println("Could not resolve binding of " + name + " " + name.getParent().getParent().getParent().getClass());
 				return true;
 			}
 			
@@ -61,13 +58,13 @@ public class VariableVisitor extends BaseVisitor implements Serializable {
 				}
 			}
 		}
+
 		return false;
 	}
 	
 	public void print()
 	{
 		for(TypeContext tctx : frequencies.keySet()) {
-			
 			System.out.println(tctx + " " + frequencies.get(tctx));
 		}
 	}

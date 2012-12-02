@@ -4,8 +4,13 @@ import java.util.LinkedList;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Block;
+
+import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
+import org.eclipse.jdt.core.dom.EnumDeclaration;
+
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.QualifiedName;
@@ -113,8 +118,14 @@ public class Predictor extends BaseVisitor {
 			return false;
 		}
 		
+		ITypeBinding typ = qn.resolveTypeBinding();
+		
+		if(typ == null) {
+			return false;
+		}
+		
 		String option = qn.getName().toString();
-		String typName = qn.getFullyQualifiedName().toString();
+		String typName = typ.getQualifiedName();
 		Context.ContextType ctx = Context.findContext(qn);
 		
 		predictEnum(typName, option, ctx);
@@ -148,14 +159,28 @@ public class Predictor extends BaseVisitor {
 		if(bind == null)
 			return false;
 		
+		if(name.getParent() instanceof EnumDeclaration || name.getParent() instanceof EnumConstantDeclaration) {
+			return false;
+		}
 		
-		if(typ.isEnum() && bind.getKind() == IBinding.VARIABLE && !name.isDeclaration()) {
+		if(typ.isEnum()) {
 			String typName = typ.getQualifiedName();
 			String option = name.toString();
-			Context.ContextType ctx = Context.findContext(name);
+
+			boolean inThere = false;
 			
-			predictEnum(typName, option, ctx);
+			for(IVariableBinding b : typ.getDeclaredFields()) {
+				if(b.getName().equals(option)) {
+					inThere = true;
+					break;
+				}
+			}
+			
+			if(inThere) {
+				predictEnum(typName, option, Context.findContext(name));
+			}
 		}
+		
 		return false;
 	}
 	
@@ -163,12 +188,11 @@ public class Predictor extends BaseVisitor {
 		int allThisType = lit.countEnumsOfType(typName, ctx);
 		int thisOption = lit.countEnumsOfTypeWithOption(typName, option, ctx);
 	
-		System.out.println(typName + "." + option + " " + thisOption + "/" + allThisType);
+		System.out.println(typName + " " + option + " " + thisOption + "/" + allThisType + " " + ctx);
 		
 		if(allThisType != 0) {
 			accurancies.add((double)thisOption / (double)allThisType);
 		}
-		
 	}
 
 	public boolean visit(MethodInvocation mi)

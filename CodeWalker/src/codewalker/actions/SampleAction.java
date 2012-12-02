@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.LinkedList;
+import java.util.Random;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -32,7 +33,9 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	private static LiteralVisitor lit = null;
 	private static VariableVisitor var = null;
 	private static MethodVisitor methods = null;
-	private static final String PROJECT = "planet";
+	private static Random generator = new Random();
+	
+	private static final String PROJECT = "jfreechart";
 
 	public SampleAction() {
 	}
@@ -68,7 +71,6 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	{
 		initData();
 		for(File file : ls) {
-			System.out.println("Testing on " + file.getName());
 			JavaFile jfile = new JavaFile(file, prj);
 			jfile.accept(lit);
 			jfile.accept(methods);
@@ -76,31 +78,61 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		}
 	}
 	
-	private static double trainLeaveOneOut(IJavaProject prj, LinkedList<File> ls)
+	private static LinkedList<File> pick10percFiles(LinkedList<File> ls, int howmany)
+	{
+		LinkedList<File> ret = new LinkedList<File>();
+		
+		for(int i = 0; i < howmany; ++i) {
+			int size = ls.size();
+			int index = generator.nextInt(size);
+			ret.add(ls.get(index));
+			ls.remove(index);
+		}
+		
+		return ret;
+	}
+	
+	private static double trainLeave10percOut(IJavaProject prj, LinkedList<File> ls)
 	{
 		final int size = ls.size();
 		double total = 0.0;
+		int tenperc = max(1, size / 10);
 		
-		for(int i = 0; i < size; ++i) {
-			File out = ls.get(i);
-			ls.remove(i);
-			
+		for(int i = 0; i < 10; ++i) {
+			LinkedList<File> outls = pick10percFiles(ls, tenperc);
 			
 			trainWithList(prj, ls);
+			
 			//print();
+			
 			Predictor pred = new Predictor(lit, var, methods);
 			
-			double thisfile = pred.test(new JavaFile(out, prj));
-			System.out.println(out.getName() + " got " + thisfile);
-			total += thisfile;
+			double thistotal = 0.0;
 			
-			ls.add(i, out);
+			for(File test : outls) {
+				double thisfile = pred.test(new JavaFile(test, prj));
+				thistotal += thisfile;
+				
+				System.out.println(test.getName() + " got " + thisfile);
+			}
+			
+			total += thistotal / (double)outls.size();
+			
+			ls.addAll(outls);
+			
 			assert(ls.size() == size);
 		}
 		
-		return total / (double)ls.size();
+		return total / (double)10;
 	}
 	
+	private static int max(int i, int j) {
+		if(i > j)
+			return i;
+		else
+			return j;
+	}
+
 	public void serialize(String fileName)
 	{
 		try {
@@ -162,7 +194,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		
 		//trainWithList(jproj, allFiles);
 		
-		double acc = trainLeaveOneOut(jproj, allFiles);
+		double acc = trainLeave10percOut(jproj, allFiles);
 		
 		System.out.println("====> Success rate " + acc);
 		
