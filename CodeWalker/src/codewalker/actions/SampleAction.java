@@ -1,9 +1,11 @@
 package codewalker.actions;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -93,7 +95,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		return ret;
 	}
 	
-	private static double trainLeave10percOut(IJavaProject prj, LinkedList<File> ls)
+	private static double trainLeave10percOut(IJavaProject prj, LinkedList<File> ls) throws IOException
 	{
 		final int size = ls.size();
 		double total = 0.0;
@@ -104,9 +106,23 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			
 			trainWithList(prj, ls);
 			
-			print();
+			//print();
 			
-			Predictor pred = new Predictor(lit, var, methods);
+			FileWriter output_file = null;
+			BufferedWriter output_file_buffer = null;
+			
+			output_file = new FileWriter("data.tokens" + i);
+			output_file_buffer = new BufferedWriter(output_file);
+			
+			output_file_buffer.write("" + tenperc);
+			output_file_buffer.newLine();
+			for(File test : outls) {
+				output_file_buffer.write(test.toString());
+				output_file_buffer.newLine();
+			}
+			output_file_buffer.flush();
+			
+			Predictor pred = new Predictor(lit, var, methods, output_file_buffer);
 			
 			double thistotal = 0.0;
 			
@@ -116,6 +132,8 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 				
 				System.out.println(test.getName() + " got " + thisfile);
 			}
+			
+			output_file_buffer.close();
 			
 			total += thistotal / (double)outls.size();
 			
@@ -195,14 +213,16 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		
 		//trainWithList(jproj, allFiles);
 		
-		double acc = trainLeave10percOut(jproj, allFiles);
-		
-		System.out.println("====> Success rate " + acc);
-		
-		//print();
-		
-		MessageDialog.openInformation(window.getShell(), "CodeWalker",
-				"Statistics were collected");
+		double acc;
+		try {
+			acc = trainLeave10percOut(jproj, allFiles);
+			System.out.println("====> Success rate " + acc);
+
+			MessageDialog.openInformation(window.getShell(), "CodeWalker",
+					"Statistics were collected");
+		} catch (IOException e) {
+			MessageDialog.openInformation(window.getShell(), "CodeWalker", "Failed to collect statistics");
+		}
 	}
 
 	public void selectionChanged(IAction action, ISelection selection) {

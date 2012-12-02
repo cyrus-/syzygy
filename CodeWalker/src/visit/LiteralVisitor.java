@@ -5,6 +5,7 @@ import java.util.Hashtable;
 
 import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
 import org.eclipse.jdt.core.dom.EnumDeclaration;
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
@@ -65,19 +66,31 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 		return false;
 	}
 	
-	public boolean visit(QualifiedName qn)
+	public static boolean qualifiedNameIsEnum(QualifiedName qn)
 	{
 		if(!qn.getQualifier().isQualifiedName()) {
 			return false;
 		}
+		
+		ITypeBinding typ = qn.resolveTypeBinding();
+		
+		if(typ == null)
+			return false;
+		if(typ.isEnum())
+			return true;
+		return false;
+	}
+	
+	public boolean visit(QualifiedName qn)
+	{
+		if(!qualifiedNameIsEnum(qn))
+			return false;
 		
 		String option = qn.getName().toString();
 		String typName = qn.getQualifier().getFullyQualifiedName().toString();
 		Context.ContextType ctx = Context.findContext(qn);
 		
 		ITypeBinding typ = qn.resolveTypeBinding();
-		if(typ == null)
-			return false;
 		
 		typName = typ.getQualifiedName();
 		
@@ -305,6 +318,18 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 		
 		return total;
 	}
+	
+	public int countFloat(float val, ContextType typ) {
+		if(floatFrequencies.containsKey(val)) {
+			Hashtable<Context.ContextType, Integer> table = floatFrequencies.get(val);
+			
+			if(table.containsKey(typ)) {
+				return table.get(typ);
+			}
+		}
+		
+		return 0;
+	}
 
 	public int countAllDoubles(ContextType typ) {
 		int total = 0;
@@ -396,13 +421,13 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	{
 		String typName = tctx.fullTypeName;
 		Context.ContextType ctx = tctx.contextType;
-		if(typName == "int") {
+		if(typName.equals("int")) {
 			return countAllInts(ctx);
-		} else if(typName == "float") {
+		} else if(typName.equals("float")) {
 			return countAllFloats(ctx);
-		} else if(typName == "double") {
+		} else if(typName.equals("double")) {
 			return countAllDoubles(ctx);
-		} else if(typName == "java.lang.String") {
+		} else if(typName.equals("java.lang.String")) {
 			return countAllStrings(ctx);
 		} else {
 			if(enumFrequencies.containsKey(typName)) {
@@ -411,5 +436,52 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 		}
 		return 0;
 		
+	}
+
+	public double getProb(TypeContext t, Expression exp) {
+		if(t.equals("int")) {
+			NumberLiteral lit = (NumberLiteral)exp;
+			int val = Integer.parseInt(lit.getToken());
+			
+			return (double)countInt(val, t.contextType) / (double)countAllInts(t.contextType);
+		} else if(t.equals("float")) {
+			NumberLiteral lit = (NumberLiteral)exp;
+			float val = Float.parseFloat(lit.getToken());
+			
+			return (double)countFloat(val, t.contextType) / (double)countAllFloats(t.contextType);
+		} else if(t.equals("double")) {
+			NumberLiteral lit = (NumberLiteral)exp;
+			double val = Double.parseDouble(lit.getToken());
+			
+			return (double)countDouble(val, t.contextType) / (double)countAllDoubles(t.contextType);
+		} else if(t.equals("java.lang.String")) {
+			StringLiteral lit = (StringLiteral)exp;
+			String val = lit.getLiteralValue();
+			
+			return (double)countString(val, t.contextType) / (double)countAllStrings(t.contextType);
+		} else {
+			String typName = null;
+			String option = null;
+			if(exp instanceof SimpleName) {
+				SimpleName name = (SimpleName)exp;
+				
+				ITypeBinding typ = name.resolveTypeBinding();
+				assert(typ != null);
+				
+				typName = typ.getQualifiedName();
+				option = name.toString();
+				
+			} else if(exp instanceof QualifiedName) {
+				QualifiedName qn = (QualifiedName)exp;
+				option = qn.getName().toString();
+				typName = qn.getQualifier().getFullyQualifiedName().toString();
+			} else {
+				assert(false);
+			}
+			
+			double total = (double)countEnumsOfType(typName, t.contextType);
+			
+			return (double)countEnumsOfTypeWithOption(typName, option, t.contextType) / total;
+		}
 	}
 }

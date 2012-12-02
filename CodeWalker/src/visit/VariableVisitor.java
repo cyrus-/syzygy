@@ -57,6 +57,7 @@ public class VariableVisitor extends BaseVisitor implements Serializable {
 	public boolean visit(SimpleName name)
 	{
 		if (VariableVisitor.isVar(name)) {
+			ITypeBinding typ = name.resolveTypeBinding();
 			String typName = typ.getQualifiedName();
 			TypeContext tctx = new TypeContext(typName, name);
 			if(frequencies.containsKey(tctx)) {
