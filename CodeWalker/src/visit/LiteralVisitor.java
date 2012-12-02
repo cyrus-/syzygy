@@ -30,7 +30,7 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	
 	public boolean visit(NumberLiteral literal)
 	{
-		String typ = null;
+		ITypeBinding typ = literal.resolveTypeBinding();
 		
 		if(typ == null) {
 			try {
@@ -44,17 +44,17 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 				} catch(final Exception e2) {
 				}
 			}
-		} else if(typ.equals("int")) {
+		} else if(typ.getName().equals("int")) {
 			try {
 				int num = Integer.parseInt(literal.getToken());
 				addInteger(num, literal);
 			} catch(final Exception e1) {
 				
 			}
-		} else if(typ.equals("double")) {
+		} else if(typ.getName().equals("double")) {
 			double num = Double.parseDouble(literal.getToken());
 			addDouble(num, literal);
-		} else if(typ.equals("float")) {
+		} else if(typ.getName().equals("float")) {
 			float num = Float.parseFloat(literal.getToken());
 			addFloat(num, literal);
 		}
