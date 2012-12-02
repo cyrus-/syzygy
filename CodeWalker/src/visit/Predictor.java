@@ -183,7 +183,7 @@ public class Predictor extends BaseVisitor {
 	private void dumpExpression1(ASTNode node)
 	{
 		String tokens = dumpExpression(node);
-		System.out.println(tokens);	
+		//System.out.println(tokens);	
 	}
 	
 	private void predictInt(int val, NumberLiteral literal)

@@ -13,6 +13,7 @@ import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.QualifiedName;
@@ -53,7 +54,7 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		return total;
 	}
 	
-	private Method findMethod(IMethodBinding meth)
+	private Method findMethod(IMethodBinding meth, MethodInvocation mi)
 	{
 		ITypeBinding cl = meth.getDeclaringClass();
 		
@@ -71,12 +72,12 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 				}
 			}
 			
-			Method newm = new Method(meth);
+			Method newm = new Method(mi, meth);
 			ls.add(newm);
 			
 			return newm;
 		} else {
-			Method newm = new Method(meth);
+			Method newm = new Method(mi, meth);
 			ArrayList<Method> ls = new ArrayList<Method>();
 			
 			ls.add(newm);
@@ -125,42 +126,71 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		}
 		return false;
 	}
-
-	public boolean visit(QualifiedName qn)
+	
+	public static boolean isPublicField(QualifiedName qn)
 	{
 		IBinding bind = qn.resolveBinding();
 		
-		//System.out.println("qualified " + qn);
-		if(bind != null && isMemberBinding(bind)) {
-			//System.out.println("Member " + qn);
-		} else {
-			ITypeBinding typ = qn.resolveTypeBinding();
-			if(typ == null) {
-				return false;
-			}
-			ITypeBinding cls = typ.getDeclaringClass();
+		if(bind instanceof IVariableBinding) {
+			IVariableBinding var = (IVariableBinding)bind;
 			
-			if(cls != null && cls.isClass()) {
-				//System.out.println(qn.getName() + " It is a class " + cls.getName());
-			} else {
-				//System.out.println("cls " + cls.getName());
+			if(var.isField() && !var.isEnumConstant()) {
+				return true;
 			}
 		}
+		return false;
+	}
+	
+	public static Method getPublicFieldAsMethod(QualifiedName qn)
+	{
+		ITypeBinding typ = qn.resolveTypeBinding();
+		if(typ == null)
+			return null;
 		
+		IBinding bind = qn.resolveBinding();
+		if(bind == null)
+			return null;
+		IVariableBinding var = (IVariableBinding)bind;
+		ITypeBinding cls = var.getDeclaringClass();
+		
+		String name = qn.getFullyQualifiedName();
+		
+		return new Method(qn, cls.getQualifiedName(), typ.getQualifiedName(), name);
+	}
+
+	public boolean visit(QualifiedName qn)
+	{
+		if(isPublicField(qn)) {
+			Method method = getPublicFieldAsMethod(qn);
+			
+			addMethod(method);
+		}
+		return false;
+	}
+	
+	public boolean isSelfPublicField(SimpleName name)
+	{
+		IBinding bind = name.resolveBinding();
+		if(bind == null)
+			return false;
+		ITypeBinding typ = name.resolveTypeBinding();
+		if(typ == null)
+			return false;
+		
+		if(bind != null && !name.isDeclaration() && isMemberBinding(bind)) {
+			return true;
+		}
 		return false;
 	}
 	
 	public boolean visit(SimpleName name)
 	{
-		IBinding bind = name.resolveBinding();
-		ITypeBinding typ = name.resolveTypeBinding();
+		if(isSelfPublicField(name)) {
+			ITypeBinding typ = name.resolveTypeBinding();
 		
-		if(bind != null && !name.isDeclaration() && isMemberBinding(bind)) {
-			TypeContext tctx = new TypeContext(typ.getQualifiedName(), name);
-			assert(thisClassName != null);
-			Method method = new Method(thisClassName, typ.getQualifiedName(), name.getFullyQualifiedName());
+			Method method = new Method(name, thisClassName, typ.getQualifiedName(), name.getFullyQualifiedName());
 			
-			addMethod(tctx, method);
+			addMethod(method);
 		}
 		
 		return false;
@@ -177,19 +207,20 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		if(meth == null)
 			return true;
 		
-		TypeContext tctx = new TypeContext(bind.getQualifiedName(), mi);
-		Method method = findMethod(meth);
+		Method method = findMethod(meth, mi);
 		
 		if(method == null)
 			return true;
 		
-		addMethod(tctx, method);
+		addMethod(method);
 		
 		return true;
 	}
 	
-	public void addMethod(TypeContext tctx, Method method)
+	public void addMethod(Method method)
 	{
+		TypeContext tctx = method.getTypeContext();
+		
 		if(frequencies.containsKey(tctx)) {	
 			Hashtable<Method, Integer> inner_table = frequencies.get(tctx);
 			if(inner_table.containsKey(method)) {

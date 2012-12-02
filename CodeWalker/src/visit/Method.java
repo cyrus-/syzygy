@@ -2,6 +2,7 @@ package visit;
 
 import java.io.Serializable;
 
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 
@@ -9,11 +10,16 @@ public class Method implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	
+	private Context.ContextType ctx;
 	private String className;
 	private String name;
 	private String returnType;
 	private String []argumentTypes;
 	boolean isField = false;
+	
+	public TypeContext getTypeContext() {
+		return new TypeContext(returnType, ctx);
+	}
 	
 	public boolean equal(Object obj)
 	{
@@ -67,8 +73,9 @@ public class Method implements Serializable {
 		return base;
 	}
 	
-	public Method(String _className, String _returnType, String _name)
+	public Method(ASTNode exp, String _className, String _returnType, String _name)
 	{
+		ctx = Context.findContext(exp);
 		className = _className;
 		returnType = _returnType;
 		name = _name;
@@ -76,8 +83,10 @@ public class Method implements Serializable {
 		isField = true;
 	}
 	
-	public Method(IMethodBinding meth)
+	public Method(ASTNode exp, IMethodBinding meth)
 	{
+		ctx = Context.findContext(exp);
+		
 		className = meth.getDeclaringClass().getQualifiedName();
 		
 		returnType = meth.getReturnType().getQualifiedName();

@@ -34,4 +34,10 @@ public class TypeContext implements Serializable {
 		fullTypeName = fullType;
 		contextType = Context.findContext(node);
 	}
+	
+	TypeContext(String fullType, Context.ContextType ctx)
+	{
+		fullTypeName = fullType;
+		contextType = ctx;
+	}
 }

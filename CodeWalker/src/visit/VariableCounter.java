@@ -53,7 +53,7 @@ public class VariableCounter extends ASTVisitor {
 		if (var.getStartPosition() < offset && var.getType().equals(typ)) {
 			addName(var.getName());
 		}
-		return true;
+		return false;
 	}
 
 	public boolean visit (VariableDeclarationFragment var) {
