@@ -20,7 +20,6 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		ITypeBinding cl = meth.getDeclaringClass();
 		
 		if(cl == null) {
-			System.err.println("Could not found class of method " + meth);
 			return null;
 		}
 		
@@ -54,17 +53,13 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 	public boolean visit(MethodInvocation mi)
 	{
 		ITypeBinding bind = mi.resolveTypeBinding();
-		if(bind == null) {
-			System.err.println("Could not solve binding of " + mi);
+		if(bind == null)
 			return true;
-		}
 		
 		IMethodBinding meth = mi.resolveMethodBinding();
 		
-		if(meth == null) {
-			System.err.println("Could not resolve binding of method " + mi);
+		if(meth == null)
 			return true;
-		}
 		
 		TypeContext tctx = new TypeContext(bind.getQualifiedName(), mi);
 		Method method = findMethod(meth);

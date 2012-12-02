@@ -79,6 +79,10 @@ public class Predictor extends BaseVisitor {
 		
 		ITypeBinding typ = qn.resolveTypeBinding();
 		
+		if(typ == null) {
+			return false;
+		}
+		
 		String option = qn.getName().toString();
 		String typName = typ.getQualifiedName();
 		Context.ContextType ctx = Context.findContext(qn);
