@@ -7,13 +7,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
-import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.QualifiedName;
@@ -27,14 +28,15 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 	
 	private Hashtable<TypeContext, Hashtable<Method, Integer>> frequencies = new Hashtable<TypeContext, Hashtable<Method, Integer> >();
 	private Hashtable<String, ArrayList<Method>> methods = new Hashtable<String, ArrayList<Method>>();
+	private Hashtable<String, ArrayList<Method>> declaredMethods = new Hashtable<String, ArrayList<Method>>();
 	
 	// temporary
 	private List<IBinding> member_bindings = null;
 	private String thisClassName = null;
 	
 	/*
-	public double getProb (TypeContext t, Expression exp) {
-		Method m = toMethod(exp);
+	public double getProb (TypeContext t, IMethodBinding meth) {
+		Method m = toMethod(meth);
 		
 		int total = 0;
 		for (Entry<Method, Integer> e : frequencies.get(t).entrySet()) {
@@ -42,16 +44,108 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		}
 		
 		return (frequencies.get(t).get(m)/total); 
-	}
-	*/
+	}*/
 	
 	
 	public int getCount (TypeContext t) {
+		return 0;
+		/*
 		int total = 0;
 		for (Entry<Method, Integer> e : frequencies.get(t).entrySet()) {
 			total += e.getValue();
 		}
-		return total;
+		return total;*/
+	}
+	
+	private boolean hasUsedMethod(IMethodBinding meth)
+	{
+		ITypeBinding cl = meth.getDeclaringClass();
+		
+		if(cl == null)
+			return false;
+		
+		String className = cl.getQualifiedName();
+		
+		if(methods.containsKey(className)) {
+			ArrayList<Method> ls = methods.get(className);
+			
+			for(Method m : ls) {
+				if(m.equal(meth)) {
+					return true;
+				}
+			}
+			return false;
+		} else {
+			return false;
+		}
+	}
+	
+	private void removeFromTable(Hashtable<String, ArrayList<Method>> table, IMethodBinding meth)
+	{
+		ITypeBinding cl = meth.getDeclaringClass();
+		
+		if(cl == null)
+			return;
+		
+		String className = cl.getQualifiedName();
+		
+		ArrayList<Method> ls = table.get(className);
+		
+		assert(ls != null);
+		
+		for(Method m : ls) {
+			if(m.equal(meth)) {
+				ls.remove(m);
+				return;
+			}
+		}
+		assert(false);
+	}
+	
+	private void addToTable(Hashtable<String, ArrayList<Method>> table, IMethodBinding meth, ASTNode md)
+	{
+		ITypeBinding cl = meth.getDeclaringClass();
+		
+		if(cl == null)
+			return;
+		
+		String className = cl.getQualifiedName();
+		Method newm = new Method(md, meth);
+		
+		
+		if(table.containsKey(className)) {
+			ArrayList<Method> ls = table.get(className);
+		
+			ls.add(newm);
+			
+		} else {
+			ArrayList<Method> ls = new ArrayList<Method>();
+			ls.add(newm);
+			table.put(className, ls);
+		}
+	}
+	
+	private boolean containsMethod(Hashtable<String, ArrayList<Method>> table, IMethodBinding meth)
+	{
+		ITypeBinding cl = meth.getDeclaringClass();
+		
+		if(cl == null)
+			return false;
+		
+		String className = cl.getQualifiedName();
+		
+		if(table.containsKey(className)) {
+			ArrayList<Method> ls = table.get(className);
+			
+			for(Method m : ls) {
+				if(m.equal(meth)) {
+					return true;
+				}
+			}
+			return false;
+		} else {
+			return false;
+		}
 	}
 	
 	private Method findMethod(IMethodBinding meth, MethodInvocation mi)
@@ -196,6 +290,18 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		return false;
 	}
 	
+	public boolean visit(MethodDeclaration md)
+	{
+		IMethodBinding mb = md.resolveBinding();
+		
+		if(mb == null)
+			return true;
+		
+		addToTable(declaredMethods, mb, md);
+		
+		return true;
+	}
+	
 	public boolean visit(MethodInvocation mi)
 	{
 		ITypeBinding bind = mi.resolveTypeBinding();
@@ -237,11 +343,23 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 	
 	public void print()
 	{
+		System.out.println(">>> USED METHODS");
+		
 		for(TypeContext tctx : frequencies.keySet()) {
 			System.out.println(tctx);
 			Hashtable<Method, Integer> inner_table = frequencies.get(tctx);
 			for(Method meth : inner_table.keySet()) {
 				System.out.println("\t" + meth.toString() + " " + inner_table.get(meth));
+			}
+		}
+		
+		System.out.println(">>> DECLARED METHODS");
+		
+		for(String className : declaredMethods.keySet()) {
+			ArrayList<Method> ls = declaredMethods.get(className);
+			
+			for(Method meth : ls) {
+				System.out.println("\t" + meth.toString());
 			}
 		}
 	}

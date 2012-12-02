@@ -85,22 +85,24 @@ public class Predictor extends BaseVisitor {
 		return exp instanceof MethodInvocation;
 	}
 	
-	private double predict (TypeContext t, Expression exp)
+	private double predict(TypeContext t, Expression exp)
 	{
 		int numLit = lit.getCount(t);
 		int numVar = variable.getCount(t);
 		int numMethods = methods.getCount(t);
 		int total = numLit + numMethods + numVar;
 		
+		
 		String foo;
 		
 		if (isLiteral(exp)) {
-			return (numLit/total) * lit.getProb(t, exp);
+			//return (numLit/total) * lit.getProb(t, exp);
 		} else if (isMethod(exp)) {
-			return (numMethods/total) * methods.getProb(t, exp);
+			//return (numMethods/total) * methods.getProb(t, exp);
 		} else {
-			return (numVar/total) * predVar(exp.getStartPosition(), t.fullTypeName, exp);
-      }
+			//return (numVar/total) * predVar(exp.getStartPosition(), t.fullTypeName, exp);
+      
+		}
 		return 0.0;
 	}
 	
@@ -300,7 +302,15 @@ public class Predictor extends BaseVisitor {
 			
 			if(inThere) {
 				predictEnum(typName, option, Context.findContext(name));
+				return false;
 			}
+		}
+		
+		if(!name.isDeclaration() && bind.getKind() == IBinding.VARIABLE) {
+			// variables
+			String typName = typ.getQualifiedName();
+			TypeContext tctx = new TypeContext(typName, name);
+			predict(tctx, name);
 		}
 		
 		return false;

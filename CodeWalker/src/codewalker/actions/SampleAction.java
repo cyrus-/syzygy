@@ -104,7 +104,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			
 			trainWithList(prj, ls);
 			
-			//print();
+			print();
 			
 			Predictor pred = new Predictor(lit, var, methods);
 			
