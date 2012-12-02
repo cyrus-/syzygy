@@ -48,13 +48,14 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 	
 	
 	public int getCount (TypeContext t) {
-		return 0;
-		/*
 		int total = 0;
-		for (Entry<Method, Integer> e : frequencies.get(t).entrySet()) {
-			total += e.getValue();
+		if(frequencies.containsKey(t)) {
+			Hashtable<Method, Integer> table = frequencies.get(t);
+			for(Method m : table.keySet()) {
+				total += table.get(m);
+			}
 		}
-		return total;*/
+		return total;
 	}
 	
 	private boolean hasUsedMethod(IMethodBinding meth)
