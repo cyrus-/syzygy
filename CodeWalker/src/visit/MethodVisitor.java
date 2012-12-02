@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map.Entry;
 
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -25,6 +26,15 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		}
 		
 		return (frequencies.get(t).get(m)/total); 
+	}
+	
+	
+	public int getCount (TypeContext t) {
+		int total = 0;
+		for (Entry<Method, Integer> e : frequencies.get(t).entrySet()) {
+			total += e.getValue();
+		}
+		return total;
 	}
 	
 	private Method findMethod(IMethodBinding meth)

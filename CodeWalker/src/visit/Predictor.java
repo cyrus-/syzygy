@@ -9,14 +9,23 @@ import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
 import org.eclipse.jdt.core.dom.EnumDeclaration;
 
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+
 import org.eclipse.jdt.core.dom.NumberLiteral;
+import org.eclipse.jdt.core.dom.BooleanLiteral;
+import org.eclipse.jdt.core.dom.CharacterLiteral;
+import org.eclipse.jdt.core.dom.StringLiteral;
+import org.eclipse.jdt.core.dom.NullLiteral;
+
+import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
-import org.eclipse.jdt.core.dom.StringLiteral;
+
+
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 
 import visit.Context.ContextType;
@@ -45,19 +54,32 @@ public class Predictor extends BaseVisitor {
 		}
 	}
 	
-	private double predVar(String t) {
-		int num = 1;
-		String foo = "Asa";
-	    return 0;
+	private double predVar(int offset, String t, ASTNode exp) {
+		int vars = getVars(offset, t, exp);
+		
+		if (vars == 0) {
+			// What now? shouldn't really happen
+			return 1;
+		} else {
+			return (1/vars);
+		}
 	}
 	
-	
+	private boolean isLiteral(Expression exp) {
+		if ((exp instanceof NumberLiteral) || (exp instanceof BooleanLiteral) || (exp instanceof CharacterLiteral) || (exp instanceof NullLiteral) || (exp instanceof StringLiteral)) {
+			return true;
+		} else if (exp instanceof Name) {
+		  return LiteralVisitor.isEnumLiteral((Name)exp);
+		} else {
+			return false;
+		}
+	}
 	
 	private double predict (TypeContext t, Expression exp)
 	{
-		int numLit = lit.count(t);
-		int numVar = variable.count(t);
-		int numMethods = methods.count(t);
+		int numLit = lit.getCount(t);
+		int numVar = variable.getCount(t);
+		int numMethods = methods.getCount(t);
 		int total = numLit + numMethods + numVar;
 		
 		String foo;
@@ -67,7 +89,7 @@ public class Predictor extends BaseVisitor {
 		} else if (isMethod(exp)) {
 			return (numMethods/total) * methods.getProb(t, exp);
 		} else {
-			return (numVar/total) * predVar(t.fullTypeName);
+			return (numVar/total) * predVar(exp.getStartPosition(), t.fullTypeName, exp);
 		}
 	}
 	
