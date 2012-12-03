@@ -59,6 +59,7 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 			// seen method
 			double sub = (1 - ((double)numseen/(double)total)) * ((double)table.get(m).intValue()/(double)total);
 			
+			
 			assert(sub <= 1.0);
 			return sub;
 		} else {
