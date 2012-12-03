@@ -61,11 +61,12 @@ public class MethodCounter extends ASTVisitor {
 				     ((t.getFullyQualifiedName().equals(tp.getFullyQualifiedName())))); 
 			    }
 				
-				if (test && (m.getReturnType().equals(typ))) {
-					Method mt = new Method(m);
+				Method mt = new Method(m);
+				if (test && (mt.getReturnType().equals(typ))) {
+					
 					for (Context.ContextType c : Context.ContextType.values()) {
 						mt.setContext(c);
-						if (mv.hasMethod(m.getReturnType(), c, mt)) {
+						if (mv.hasMethod(mt.getReturnType(), c, mt)) {
 							mSet.add(mt);
 						}
 					}

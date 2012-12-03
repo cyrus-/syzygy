@@ -28,6 +28,9 @@ public class Method implements Serializable {
 		ctx = c;
 	}
 	
+	public String getReturnType(){
+		return returnType;
+	}
 
 	private String getFullType(String signature) {
 	    String packageName = Signature.getSignatureQualifier(signature);
