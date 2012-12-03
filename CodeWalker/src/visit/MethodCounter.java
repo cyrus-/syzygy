@@ -10,6 +10,7 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
@@ -34,6 +35,13 @@ public class MethodCounter extends ASTVisitor {
 	}
 	
 	
+	private String getFullType(String signature) {
+	    String packageName = Signature.getSignatureQualifier(signature);
+		String fullName = (packageName.trim().equals("")?"":packageName+".") +
+		Signature.getSignatureSimpleName(signature);
+		
+		return fullName;
+	}
 	
 	public void addMethodsGen (IType tp, boolean pubCheck) {
 		ITypeHierarchy h;
@@ -48,6 +56,8 @@ public class MethodCounter extends ASTVisitor {
 			IMethod[] meths = t.getMethods();
 			
 			for (IMethod m : meths) {
+				
+				System.out.print(m.getElementName());
 				int f = m.getFlags();
 				boolean test = false;
 			
