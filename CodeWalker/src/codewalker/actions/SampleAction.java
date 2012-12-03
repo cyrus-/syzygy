@@ -37,8 +37,9 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	private static MethodVisitor methods = null;
 	private static Random generator = new Random();
 	private static int RATIO = 10;
-	private static int ITERATIONS = 1;
+	private static int ITERATIONS = 10;
 	private static boolean SHOW_TRAINING = false;
+	private static File PROJECT_DIR = null;
 	
 	private static final String PROJECT = "jfreechart";
 
@@ -90,19 +91,19 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	{
 		LinkedList<File> ret = new LinkedList<File>();
 		
+		/*
 		for(int i = 0; i < howmany; ++i) {
 			int index = 0;
 			ret.add(ls.get(index));
 			ls.remove(index);
-		}
+		}*/
 		
-		/*
 		for(int i = 0; i < howmany; ++i) {
 			int size = ls.size();
 			int index = generator.nextInt(size);
 			ret.add(ls.get(index));
 			ls.remove(index);
-		}*/
+		}
 		
 		return ret;
 	}
@@ -131,7 +132,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			output_file_buffer.write("" + tenperc);
 			output_file_buffer.newLine();
 			for(File test : outls) {
-				output_file_buffer.write(test.toString());
+				output_file_buffer.write(test.getAbsolutePath().substring(PROJECT_DIR.getAbsolutePath().length()).substring(1) );
 				output_file_buffer.newLine();
 			}
 			output_file_buffer.flush();
@@ -230,9 +231,9 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		
 		IJavaProject jproj = JavaCore.create(proj);
 		LinkedList<File> allFiles = new LinkedList<File>();
-		File projectDir = proj.getLocation().toFile();
+		PROJECT_DIR = proj.getLocation().toFile();
 		
-		getAllFiles(projectDir, allFiles);
+		getAllFiles(PROJECT_DIR, allFiles);
 		
 		double acc;
 		try {

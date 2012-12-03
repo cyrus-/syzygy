@@ -107,6 +107,12 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	public static boolean isEnumLiteral (Name name) {
 		ITypeBinding typ = name.resolveTypeBinding();
 		
+		if(name instanceof SimpleName) {
+			SimpleName s = (SimpleName)name;
+			if(s.isDeclaration())
+				return false;
+		}
+		
 		if (typ == null) return false;
 		
 		if(name.getParent() instanceof EnumDeclaration || name.getParent() instanceof EnumConstantDeclaration) {

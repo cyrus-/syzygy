@@ -55,7 +55,7 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		
 		if (total == 0) { return -1; }
 		
-		double eta = 100.0;
+		double eta = 10.0;
 		double p_unseen = ((double)numseen/((double)total + eta));
 		if (table.containsKey(m)) {
 			// seen method
