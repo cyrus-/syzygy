@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -27,11 +28,25 @@ public class Method implements Serializable {
 		ctx = c;
 	}
 	
+
+	private String getFullType(String signature) {
+	    String packageName = Signature.getSignatureQualifier(signature);
+		String fullName = (packageName.trim().equals("")?"":packageName+".") +
+		Signature.getSignatureSimpleName(signature);
+		
+		return fullName;
+	}
+	
 	public Method(IMethod im) throws JavaModelException {
 		className = im.getDeclaringType().getFullyQualifiedName();
 		name = im.getElementName();
-		returnType = im.getReturnType();
+		returnType = getFullType(im.getReturnType());
 		argumentTypes = im.getParameterTypes();
+		
+		argumentTypes = new String[im.getParameterTypes().length];
+		for (int i = 0; i < argumentTypes.length; i++) {
+			argumentTypes[i] = getFullType(im.getParameterTypes()[i]);
+		}
 	}
 	
 	

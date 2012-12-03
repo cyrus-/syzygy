@@ -35,14 +35,6 @@ public class MethodCounter extends ASTVisitor {
 	}
 	
 	
-	private String getFullType(String signature) {
-	    String packageName = Signature.getSignatureQualifier(signature);
-		String fullName = (packageName.trim().equals("")?"":packageName+".") +
-		Signature.getSignatureSimpleName(signature);
-		
-		return fullName;
-	}
-	
 	public void addMethodsGen (IType tp, boolean pubCheck) {
 		ITypeHierarchy h;
 		try {
