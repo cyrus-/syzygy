@@ -31,6 +31,10 @@ public class Method implements Serializable {
 	public String getReturnType(){
 		return returnType;
 	}
+	
+	public String getFullName(){
+		return className + "." + name;
+	}
 
 	private String getFullType(String signature) {
 	    String packageName = Signature.getSignatureQualifier(signature);
@@ -38,6 +42,11 @@ public class Method implements Serializable {
 		Signature.getSignatureSimpleName(signature);
 		
 		return fullName;
+	}
+	
+	public int hashCode()
+	{
+		return this.className.hashCode() + name.hashCode() + returnType.hashCode();
 	}
 	
 	public Method(IMethod im) throws JavaModelException {
@@ -52,6 +61,40 @@ public class Method implements Serializable {
 		}
 	}
 	
+	public Method(String c, String n, String r, String[] a) {
+		className = c;
+		name = n;
+		returnType = r;
+		argumentTypes = a;
+	}
+	
+	public boolean equals(Object obj)
+	{
+		if(obj == this)
+			return true;
+		
+		if(obj instanceof Method) {
+			Method other = (Method)obj;
+			
+			if(!other.className.equals(className))
+				return false;
+			if(!other.name.equals(name))
+				return false;
+			if(!other.returnType.equals(returnType))
+				return false;
+			
+			if(other.argumentTypes.length != argumentTypes.length)
+				return false;
+			int i = 0;
+			for(String arg : argumentTypes) {
+				if(!arg.equals(other.argumentTypes[i]))
+					return false;
+				i++;
+			}
+			return true;
+		}
+		return false;
+	}
 	
 	public boolean equal(Object obj)
 	{

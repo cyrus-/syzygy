@@ -25,10 +25,9 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import visit.LiteralVisitor;
 import visit.MethodVisitor;
 import visit.Predictor;
-import visit.VariableVisitor;
-import dir.Directory;
-import dir.JavaFile;
 import visit.Tracer;
+import visit.VariableVisitor;
+import dir.JavaFile;
 
 
 public class SampleAction implements IWorkbenchWindowActionDelegate {
@@ -37,8 +36,11 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	private static VariableVisitor var = null;
 	private static MethodVisitor methods = null;
 	private static Random generator = new Random();
+	private static int RATIO = 10;
+	private static int ITERATIONS = 1;
+	private static boolean SHOW_TRAINING = false;
 	
-	private static final String PROJECT = "planet";
+	private static final String PROJECT = "jfreechart";
 
 	public SampleAction() {
 		
@@ -75,7 +77,8 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	{
 		initData();
 		for(File file : ls) {
-			System.out.println("Training on " + file.getName());
+			if(SHOW_TRAINING)
+				System.out.println("Training on " + file.getName());
 			JavaFile jfile = new JavaFile(file, prj);
 			jfile.accept(lit);
 			jfile.accept(methods);
@@ -88,11 +91,18 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		LinkedList<File> ret = new LinkedList<File>();
 		
 		for(int i = 0; i < howmany; ++i) {
+			int index = 0;
+			ret.add(ls.get(index));
+			ls.remove(index);
+		}
+		
+		/*
+		for(int i = 0; i < howmany; ++i) {
 			int size = ls.size();
 			int index = generator.nextInt(size);
 			ret.add(ls.get(index));
 			ls.remove(index);
-		}
+		}*/
 		
 		return ret;
 	}
@@ -102,10 +112,11 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		final int size = ls.size();
 		double total = 0.0;
 		double nonzerototal = 0.0;
-		int tenperc = max(1, size / 10);
+		int tenperc = max(1, size / RATIO);
 		
-		for(int i = 0; i < 10; ++i) {
+		for(int i = 0; i < ITERATIONS; ++i) {
 			LinkedList<File> outls = pick10percFiles(ls, tenperc);
+			System.out.println("=========== ITERATION " + i + " ===========");
 			
 			trainWithList(prj, ls);
 			
@@ -130,12 +141,16 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			double thistotal = 0.0;
 			double thisnonzerototal = 0.0;
 			
+			System.out.println("======> Need to test with " + outls.size() + " files");
+			int file_cur = 0;
 			for(File test : outls) {
+				file_cur++;
+				
 				double thisfile = pred.test(new JavaFile(test, prj), test);
 				thistotal += thisfile;
 				thisnonzerototal += pred.get_nonzero_test();
-			
-				System.out.println(test.getName() + " got " + thisfile);
+
+				System.out.println("==> " + file_cur + "/" + outls.size() + " " + test.getName() + " got " + thisfile);
 			}
 			
 			output_file_buffer.close();
@@ -148,9 +163,9 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			assert(ls.size() == size);
 		}
 		
-		System.out.println("====> Non Zero Success Rate: " + nonzerototal / (double)10);
+		System.out.println("====> Non Zero Success Rate: " + nonzerototal / (double)ITERATIONS);
 		
-		return total / (double)10;
+		return total / (double)ITERATIONS;
 	}
 	
 	private static int max(int i, int j) {
@@ -235,7 +250,8 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		}
 	}
 
-	public void selectionChanged(IAction action, ISelection selection) {
+	public void selectionChanged(IAction action, ISelection selection)
+	{
 	}
 
 

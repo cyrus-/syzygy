@@ -53,12 +53,14 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		}
 		int numseen = table.size();
 		
-		if (total == 0) return -1;
+		if (total == 0) { return -1; }
 		
+		double eta = 100.0;
+		double p_unseen = ((double)numseen/((double)total + eta));
 		if (table.containsKey(m)) {
 			// seen method
-			double sub = (1 - ((double)numseen/(double)total)) * ((double)table.get(m).intValue()/(double)total);
 			
+			double sub = (1 - p_unseen) * ((double)table.get(m).intValue()/(double)total);
 			
 			assert(sub <= 1.0);
 			return sub;
@@ -70,9 +72,10 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 			int tmp = mctr.getCount();
 			
 			if (tmp == 0) {
+				//System.out.println("tmp == 0");
 				return -1;
 			} else {
-				return ((double)numseen/(double)total) * (1.0/(double)tmp);
+				return p_unseen * (1.0/(double)tmp);
 			}
 		}
 	}

@@ -113,8 +113,6 @@ public class Predictor extends BaseVisitor {
 			return;
 		}
 		
-		dumpExpression(exp);
-		
 		if (isLiteral(exp)) {
 			try {
 				thisProb = ((double)numLit/(double)total) * lit.getProb(t, exp);
@@ -151,6 +149,8 @@ public class Predictor extends BaseVisitor {
 			nonZeroProb += thisProb;
 		}
 		totalProb += thisProb;
+		
+		dumpExpression1(exp);
 	}
 	
 	public void preVisit (ASTNode node) {
@@ -245,7 +245,6 @@ public class Predictor extends BaseVisitor {
 		String tokens = dumpExpression(node);
 		
 		try {
-			System.out.println("Wrote " + tokens);
 			output_file_buffer.write(tokens);
 			output_file_buffer.newLine();
 			output_file_buffer.flush();

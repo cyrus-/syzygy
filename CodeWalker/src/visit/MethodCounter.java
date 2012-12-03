@@ -14,7 +14,9 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
@@ -48,8 +50,6 @@ public class MethodCounter extends ASTVisitor {
 			IMethod[] meths = t.getMethods();
 			
 			for (IMethod m : meths) {
-				
-				System.out.print(m.getElementName());
 				int f = m.getFlags();
 				boolean test = false;
 			
@@ -62,18 +62,20 @@ public class MethodCounter extends ASTVisitor {
 			    }
 				
 				Method mt = new Method(m);
+				
+				//System.out.println(mt.getReturnType() + " " + typ);
 				if (test && (mt.getReturnType().equals(typ))) {
-					
+					//System.out.println("method : " + mt.getFullName());
 					for (Context.ContextType c : Context.ContextType.values()) {
 						mt.setContext(c);
-						if (mv.hasMethod(mt.getReturnType(), c, mt)) {
+						if (!(mv.hasMethod(mt.getReturnType(), c, mt))) {
 							mSet.add(mt);
 						}
 					}
 				}
 			}
 		} catch (JavaModelException e) {
-			System.out.println("couldn't get methods");
+			//System.out.println("couldn't get methods");
 			continue;
 		}
 		}
@@ -131,10 +133,33 @@ public class MethodCounter extends ASTVisitor {
 	
 	
 	public boolean visit (TypeDeclaration dec) {
+		
+		for (MethodDeclaration m : dec.getMethods()) {
+			IMethodBinding mi = m.resolveBinding();
+			
+			if (mi == null) {
+				//System.out.println("Could not get method binding");
+				continue;
+			}
+			
+			Method mt = new Method(m, mi);
+			
+			if ((mt.getReturnType().equals(typ))) {
+				for (Context.ContextType c : Context.ContextType.values()) {
+					mt.setContext(c);
+					if (mv.hasMethod(mt.getReturnType(), c, mt)) {
+						mSet.add(mt);
+					}
+				}
+			}
+		}
+		return true;
+		/*
 		IJavaElement j = dec.resolveBinding().getJavaElement();
 		
 		if(j == null) {
-			//System.out.println("NULL");
+			System.out.println("can't find class");
+			System.out.println("blah: " + dec.resolveBinding().toString());
 			return true;
 		} else {
 			//System.out.println("NOT NULL");
@@ -146,6 +171,7 @@ public class MethodCounter extends ASTVisitor {
 			addMethodsGen(((IClassFile) j).getType(), false);
 		}
 		return true;
+		*/
 	}
 
 	public int getCount() {
