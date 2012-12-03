@@ -46,7 +46,9 @@ public class Predictor extends BaseVisitor {
 	private VariableVisitor variable;
 	private MethodVisitor methods;
 	private double totalProb = 0;
+	private double nonZeroProb = 0.0;
 	private int numPreds = 0; 
+	private int numNonZeroPreds = 0;
 	
 	private File test_file = null;
 	private BufferedWriter output_file_buffer = null;
@@ -124,6 +126,13 @@ public class Predictor extends BaseVisitor {
 		} else if (isMethod(exp)) {
 			double p = methods.getProb(t, (MethodInvocation)exp);
 			
+			//System.out.println("Method " + exp + " p:" + p + " numMethods/Total:" + (double)numMethods/(double)total);
+			
+			if(p < 0)
+				Tracer.numMethodsMinus1++;
+			else
+				Tracer.numMethodsPositive++;
+			
 			if (p < 0) return;
 			
 			totalProb += ((double)numMethods/(double)total) * p;
@@ -134,6 +143,13 @@ public class Predictor extends BaseVisitor {
 			numPreds++;
 		}
 		
+		Tracer.numPredTotal++;
+		if(thisProb == 0.0)
+			Tracer.numPredZero++;
+		if(thisProb > 0.0) {
+			numNonZeroPreds++;
+			nonZeroProb += thisProb;
+		}
 		totalProb += thisProb;
 	}
 	
@@ -260,5 +276,12 @@ public class Predictor extends BaseVisitor {
 		variable = _variable;
 		methods = _methods;
 		output_file_buffer = buf;
+	}
+
+	public double get_nonzero_test() {
+		if(numNonZeroPreds == 0)
+			return 0.0;
+		
+		return nonZeroProb / (int)numNonZeroPreds;
 	}
 }

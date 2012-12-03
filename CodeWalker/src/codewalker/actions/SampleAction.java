@@ -28,6 +28,7 @@ import visit.Predictor;
 import visit.VariableVisitor;
 import dir.Directory;
 import dir.JavaFile;
+import visit.Tracer;
 
 
 public class SampleAction implements IWorkbenchWindowActionDelegate {
@@ -74,6 +75,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	{
 		initData();
 		for(File file : ls) {
+			System.out.println("Training on " + file.getName());
 			JavaFile jfile = new JavaFile(file, prj);
 			jfile.accept(lit);
 			jfile.accept(methods);
@@ -99,6 +101,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	{
 		final int size = ls.size();
 		double total = 0.0;
+		double nonzerototal = 0.0;
 		int tenperc = max(1, size / 10);
 		
 		for(int i = 0; i < 10; ++i) {
@@ -125,22 +128,27 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			Predictor pred = new Predictor(lit, var, methods, output_file_buffer);
 			
 			double thistotal = 0.0;
+			double thisnonzerototal = 0.0;
 			
 			for(File test : outls) {
 				double thisfile = pred.test(new JavaFile(test, prj), test);
 				thistotal += thisfile;
-				
+				thisnonzerototal += pred.get_nonzero_test();
+			
 				System.out.println(test.getName() + " got " + thisfile);
 			}
 			
 			output_file_buffer.close();
 			
 			total += thistotal / (double)outls.size();
+			nonzerototal += thisnonzerototal / (double)outls.size();
 			
 			ls.addAll(outls);
 			
 			assert(ls.size() == size);
 		}
+		
+		System.out.println("====> Non Zero Success Rate: " + nonzerototal / (double)10);
 		
 		return total / (double)10;
 	}
@@ -211,12 +219,14 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		
 		getAllFiles(projectDir, allFiles);
 		
-		//trainWithList(jproj, allFiles);
-		
 		double acc;
 		try {
 			acc = trainLeave10percOut(jproj, allFiles);
 			System.out.println("====> Success rate " + acc);
+			System.out.println("Total Predictions: " + Tracer.numPredTotal);
+			System.out.println("0.0 Predictions: " + Tracer.numPredZero);
+			System.out.println("Positive Predictions in Methods: " + Tracer.numMethodsPositive);
+			System.out.println("Negative Predictions in Methods: " + Tracer.numMethodsMinus1);
 
 			MessageDialog.openInformation(window.getShell(), "CodeWalker",
 					"Statistics were collected");

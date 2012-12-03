@@ -12,6 +12,8 @@ import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
@@ -26,7 +28,7 @@ public class MethodCounter extends ASTVisitor {
 	public MethodCounter(int o, String t) {
 		offset = o;
 		typ = t;
-		System.out.println("Finding methods of type " + t + " before offset " + o);
+		//System.out.println("Finding methods of type " + t + " before offset " + o);
 	}
 	
 	
@@ -70,6 +72,13 @@ public class MethodCounter extends ASTVisitor {
 	}
 	
 	public void addMethods (IJavaElement j) {
+		if(j == null) {
+			//System.out.println("NULL");
+			return;
+		} else {
+			//System.out.println("NOT NULL");
+		}
+		
 		if (j.getElementType() == IJavaElement.TYPE) {
 			addMethodsGen(((IType)j), true);
 		}
@@ -77,28 +86,37 @@ public class MethodCounter extends ASTVisitor {
 	
 	public boolean visit (SingleVariableDeclaration var) {
 		if (var.getStartPosition() < offset) {
-			addMethods(var.getType().resolveBinding().getJavaElement());
+			ITypeBinding bind = var.getType().resolveBinding();
+			
+			if(bind != null)
+				addMethods(bind.getJavaElement());
 		}
 		return false;
 	}
 	
 	public boolean visit (FieldDeclaration var) {
 		if (var.getStartPosition() < offset) {
-			addMethods(var.getType().resolveBinding().getJavaElement());
+			ITypeBinding bind = var.getType().resolveBinding();
+			if(bind != null)
+				addMethods(bind.getJavaElement());
 		}
 		return false;
 	}
 	
 	public boolean visit (VariableDeclarationExpression var) {
 		if (var.getStartPosition() < offset) {
-			addMethods(var.getType().resolveBinding().getJavaElement());
+			ITypeBinding bind = var.getType().resolveBinding();
+			if(bind != null)
+				addMethods(bind.getJavaElement());
 		}
 		return false;
 	}
 	
 	public boolean visit (VariableDeclarationStatement var) {
 		if (var.getStartPosition() < offset) {
-			addMethods(var.getType().resolveBinding().getJavaElement());
+			ITypeBinding bind = var.getType().resolveBinding();
+			if(bind != null)
+				addMethods(bind.getJavaElement());
 		}
 		return false;
 	}
@@ -107,6 +125,13 @@ public class MethodCounter extends ASTVisitor {
 	public boolean visit (TypeDeclaration dec) {
 		IJavaElement j = dec.resolveBinding().getJavaElement();
 		
+		if(j == null) {
+			//System.out.println("NULL");
+			return true;
+		} else {
+			//System.out.println("NOT NULL");
+		}
+		
 		if (j.getElementType() == IJavaElement.TYPE) {
 			addMethodsGen((IType) j, false);
 		} else if (j.getElementType() == IJavaElement.CLASS_FILE){
@@ -114,7 +139,7 @@ public class MethodCounter extends ASTVisitor {
 		}
 		return true;
 	}
-		
+
 	public int getCount() {
 		return names.size();
 	}

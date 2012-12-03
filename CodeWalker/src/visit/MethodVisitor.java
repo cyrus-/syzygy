@@ -34,18 +34,6 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 	private List<IBinding> member_bindings = null;
 	private String thisClassName = null;
 	
-	/*
-	public double getProb (TypeContext t, IMethodBinding meth) {
-		Method m = toMethod(meth);
-		
-		int total = 0;
-		for (Entry<Method, Integer> e : frequencies.get(t).entrySet()) {
-			total += e.getValue();
-		}
-		
-		return (frequencies.get(t).get(m)/total); 
-	}*/
-	
 	public double getProb(TypeContext t, MethodInvocation mi) {
 		// total number (used + unused) methods available of given return type
 		
@@ -67,7 +55,10 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		
 		if (table.containsKey(m)) {
 			// seen method
-			return (1 - (numseen/total)) * (table.get(m).intValue()/total);
+			double sub = ((double)numseen/(double)total) * ((double)table.get(m).intValue()/(double)total);
+			
+			assert(sub <= 1.0);
+			return (1.0 - sub);
 		} else {
 			// unseen method
 			MethodCounter mctr = new MethodCounter(mi.getStartPosition(), t.fullTypeName);
@@ -75,14 +66,17 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 			
 			int tmp = (mctr.getCount() - numseen);
 			
+			if(tmp < 0) {
+				//System.out.println(">>>> " + tmp);
+			}
+			
 			if (tmp == 0) {
 				return -1;
 			} else {
-			  return (numseen/total) * (1/tmp);
+				return ((double)numseen/(double)total) * (1.0/(double)tmp);
 			}
 		}
 	}
-	
 	
 	public int getCount (TypeContext t) {
 		int total = 0;
