@@ -22,14 +22,17 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 public class MethodCounter extends ASTVisitor {
 	
 	private int offset;
+	private MethodVisitor mv;
 	private String typ;
-	private Set<String> names = new HashSet<String>();
+	private Set<Method> mSet = new HashSet<Method>();
 	
-	public MethodCounter(int o, String t) {
+	public MethodCounter(int o, String t, MethodVisitor m) {
 		offset = o;
 		typ = t;
+		mv = m;
 		//System.out.println("Finding methods of type " + t + " before offset " + o);
 	}
+	
 	
 	
 	public void addMethodsGen (IType tp, boolean pubCheck) {
@@ -57,11 +60,13 @@ public class MethodCounter extends ASTVisitor {
 			    }
 				
 				if (test && (m.getReturnType().equals(typ))) {
-					StringBuilder fullname = new StringBuilder();
-					fullname.append(m.getDeclaringType().getFullyQualifiedName());
-					fullname.append(".");
-					fullname.append(m.getElementName());
-					names.add(fullname.toString());
+					Method mt = new Method(m);
+					for (Context.ContextType c : Context.ContextType.values()) {
+						mt.setContext(c);
+						if (mv.hasMethod(m.getReturnType(), c, mt)) {
+							mSet.add(mt);
+						}
+					}
 				}
 			}
 		} catch (JavaModelException e) {
@@ -141,6 +146,6 @@ public class MethodCounter extends ASTVisitor {
 	}
 
 	public int getCount() {
-		return names.size();
+		return mSet.size();
 	}
 }

@@ -43,7 +43,9 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 			return 0.0;
 		}
 		
+		
 		Hashtable<Method, Integer> table = frequencies.get(t);
+		
 
 		int total = 0;
 		for (Entry<Method, Integer> e : table.entrySet()) {
@@ -55,20 +57,16 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		
 		if (table.containsKey(m)) {
 			// seen method
-			double sub = ((double)numseen/(double)total) * ((double)table.get(m).intValue()/(double)total);
+			double sub = (1 - ((double)numseen/(double)total)) * ((double)table.get(m).intValue()/(double)total);
 			
 			assert(sub <= 1.0);
-			return (1.0 - sub);
+			return sub;
 		} else {
 			// unseen method
-			MethodCounter mctr = new MethodCounter(mi.getStartPosition(), t.fullTypeName);
+			MethodCounter mctr = new MethodCounter(mi.getStartPosition(), t.fullTypeName, this);
 			mi.getRoot().accept(mctr);
 			
-			int tmp = (mctr.getCount() - numseen);
-			
-			if(tmp < 0) {
-				//System.out.println(">>>> " + tmp);
-			}
+			int tmp = mctr.getCount();
 			
 			if (tmp == 0) {
 				return -1;
@@ -157,6 +155,17 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		}
 	}
 	
+	public boolean hasMethod(String type, Context.ContextType ctx, Method m) {
+		Hashtable<Method, Integer> table = frequencies.get(new TypeContext(type, ctx));
+		
+		if (table == null) {
+			return false;
+		} else {
+			return table.containsKey(m);
+		}
+	}
+	
+	//not need
 	private boolean containsMethod(Hashtable<String, ArrayList<Method>> table, IMethodBinding meth)
 	{
 		ITypeBinding cl = meth.getDeclaringClass();

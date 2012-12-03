@@ -2,6 +2,8 @@ package visit;
 
 import java.io.Serializable;
 
+import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -20,6 +22,18 @@ public class Method implements Serializable {
 	public TypeContext getTypeContext() {
 		return new TypeContext(returnType, ctx);
 	}
+	
+	public void setContext(Context.ContextType c) {
+		ctx = c;
+	}
+	
+	public Method(IMethod im) throws JavaModelException {
+		className = im.getDeclaringType().getFullyQualifiedName();
+		name = im.getElementName();
+		returnType = im.getReturnType();
+		argumentTypes = im.getParameterTypes();
+	}
+	
 	
 	public boolean equal(Object obj)
 	{
