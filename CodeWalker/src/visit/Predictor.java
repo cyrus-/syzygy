@@ -4,40 +4,18 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.io.Writer;
-import java.util.LinkedList;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
 
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.Block;
-
-import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
-import org.eclipse.jdt.core.dom.EnumDeclaration;
-
 import org.eclipse.jdt.core.dom.Expression;
-import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
-
 import org.eclipse.jdt.core.dom.NumberLiteral;
-import org.eclipse.jdt.core.dom.BooleanLiteral;
-import org.eclipse.jdt.core.dom.CharacterLiteral;
-import org.eclipse.jdt.core.dom.StringLiteral;
-import org.eclipse.jdt.core.dom.NullLiteral;
-
-import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
-
-
-import org.eclipse.jdt.core.dom.VariableDeclaration;
-
-import visit.Context.ContextType;
+import org.eclipse.jdt.core.dom.StringLiteral;
 
 import dir.JavaFile;
 
@@ -47,11 +25,13 @@ public class Predictor extends BaseVisitor {
 	private MethodVisitor methods;
 	private double totalProb = 0;
 	private double nonZeroProb = 0.0;
-	private int numPreds = 0; 
+	private int numPreds = 0;
+	private int numNonTotalZPreds = 0;
 	private int numNonZeroPreds = 0;
 	
 	private File test_file = null;
 	private BufferedWriter output_file_buffer = null;
+	private BufferedWriter output_stat = null;
 	
 	// Number of variables available in scope
 	private int getVars (int offset, String typ, ASTNode node) {
@@ -101,7 +81,13 @@ public class Predictor extends BaseVisitor {
 		} else return false;
 	}
 	
-	private void predict(TypeContext t, Expression exp)
+	private void dumpStats(String form , double prob, TypeContext t) throws IOException {
+		output_stat.write(form + "\t" + prob + "\t" + t);
+		output_stat.newLine();
+		output_stat.flush();
+	}
+	
+	private double predict(TypeContext t, Expression exp, boolean log, int n) throws IOException
 	{
 		int numLit = lit.getCount(t);
 		int numVar = variable.getCount(t);
@@ -110,37 +96,99 @@ public class Predictor extends BaseVisitor {
 		double thisProb = 0.0;
 		
 		if(total == 0) {
-			return;
+			if (log) numPreds++;
+			if (log) Tracer.numPredZero++;
+			if(log) dumpExpression1(exp);
+			return 0;
 		}
 		
 		if (isLiteral(exp)) {
 			try {
 				thisProb = ((double)numLit/(double)total) * lit.getProb(t, exp);
 				//System.out.println(exp + " ====> " + numLit + " " + total + " " + lit.getProb(t,  exp) + " " + thisProb);
-				numPreds++;
+				if (log) numPreds++;
+				if (log) numNonTotalZPreds++;
+				if (log) dumpStats("lit", thisProb, t);
 			} catch(java.lang.NumberFormatException e) {
-				return;
+				return -1;
 			}
 		} else if (isMethod(exp)) {
-			double p = methods.getProb(t, (MethodInvocation)exp);
+			
+			MethodInvocation mi = (MethodInvocation)exp;
+			double p = methods.getProb(t, mi);
 			
 			//System.out.println("Method " + exp + " p:" + p + " numMethods/Total:" + (double)numMethods/(double)total);
 			
-			if(p < 0)
-				Tracer.numMethodsMinus1++;
-			else
-				Tracer.numMethodsPositive++;
+			if(p < 0) {
+				if (log) Tracer.numMethodsMinus1++;
+			    return -1;
+		    }
 			
-			if (p < 0) return;
 			
-			totalProb += ((double)numMethods/(double)total) * p;
-			numPreds++;
+			thisProb = ((double)numMethods/(double)total) * p;
+			
+			IMethodBinding ib = mi.resolveMethodBinding();
+			
+			if(ib == null) { 
+			    if (log) Tracer.numMethodsMinus1++;
+				return -1;
+		    }
+			
+			ITypeBinding object_type = ib.getDeclaringClass();
+			Expression object_expr = mi.getExpression();
+			
+			if(object_type != null && object_expr != null) {
+				double result = predict(new TypeContext(object_type.getQualifiedName(), Context.ContextType.METHOD_ARGUMENT),
+					object_expr, false, n + 1);
+				if(result == -1) {
+					if(log) Tracer.numMethodsMinus1++;
+					return -1;
+				}
+				
+				thisProb *= result;
+			}
+			
+			ITypeBinding[] binds = ib.getParameterTypes();
+			if(mi.arguments().size() <= binds.length) {
+				int i = 0;
+				for (Object _arg : mi.arguments()) {
+					Expression arg = (Expression)_arg;
+					ITypeBinding bind = binds[i];
+				
+					if(bind == null) {
+						if (log) Tracer.numMethodsMinus1++;
+						return -1;
+					}
+				
+					double result = predict(new TypeContext(bind.getQualifiedName(), Context.ContextType.METHOD_ARGUMENT),
+							arg, false, n + 1);
+					if(result == -1) {
+						if (log) Tracer.numMethodsMinus1++;
+						return -1;
+					}
+					thisProb *= result;
+					++i;
+				}
+			}
+			
+			if (log) numPreds++;
+			if (log) numNonTotalZPreds++;
+			if (log) Tracer.numMethodsPositive++;
+
+			if (log) dumpStats("met", thisProb, t);
 		} else if (isVariable(exp)) {
 			//System.out.println("VAR " + exp + " numVar:" + numVar + " total:" + total + " predVar:" + predVar(exp.getStartPosition(), t.fullTypeName, exp));
+			
 			thisProb = ((double)numVar/(double)total) * predVar(exp.getStartPosition(), t.fullTypeName, exp);
-			numPreds++;
+			if (log) numPreds++;
+			if (log) numNonTotalZPreds++;
+			if (log) dumpStats("var", thisProb, t);
+			
+		} else {
+			return -1;
 		}
 		
+		if (log) {
 		Tracer.numPredTotal++;
 		if(thisProb == 0.0)
 			Tracer.numPredZero++;
@@ -151,6 +199,9 @@ public class Predictor extends BaseVisitor {
 		totalProb += thisProb;
 		
 		dumpExpression1(exp);
+		}
+		
+		return thisProb;
 	}
 	
 	public void preVisit (ASTNode node) {
@@ -160,7 +211,10 @@ public class Predictor extends BaseVisitor {
 			ITypeBinding typ = exp.resolveTypeBinding();
 			
 			if (typ != null) {
-				predict(new TypeContext(typ.getQualifiedName(), Context.findContext(node)), exp);
+				try {
+					predict(new TypeContext(typ.getQualifiedName(), Context.findContext(node)), exp, true, 1);
+				} catch (IOException e) {
+				}
 			}
 		}
 	}
@@ -269,18 +323,26 @@ public class Predictor extends BaseVisitor {
 		}
 	}
 	
-	public Predictor(LiteralVisitor _lit, VariableVisitor _variable, MethodVisitor _methods, BufferedWriter buf)
+	public Predictor(LiteralVisitor _lit, VariableVisitor _variable, MethodVisitor _methods, BufferedWriter buf, BufferedWriter stats_buf)
 	{
 		lit = _lit;
 		variable = _variable;
 		methods = _methods;
 		output_file_buffer = buf;
+		output_stat = stats_buf;
 	}
 
 	public double get_nonzero_test() {
 		if(numNonZeroPreds == 0)
 			return 0.0;
 		
-		return nonZeroProb / (int)numNonZeroPreds;
+		return nonZeroProb / (double)numNonZeroPreds;
+	}
+	
+	public double get_nonzerototal_test() {
+		if(this.numNonTotalZPreds == 0)
+			return 0.0;
+		
+		return totalProb / (double)numNonTotalZPreds;
 	}
 }

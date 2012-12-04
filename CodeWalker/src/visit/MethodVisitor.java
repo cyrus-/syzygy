@@ -8,7 +8,10 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
+import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
@@ -37,7 +40,20 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 	public double getProb(TypeContext t, MethodInvocation mi) {
 		// total number (used + unused) methods available of given return type
 		
-		Method m = new Method(mi, mi.resolveMethodBinding());
+		if(mi == null) {
+			return -1.0;
+		}
+		
+		IMethodBinding bind = mi.resolveMethodBinding();
+		if(bind == null)
+			return -1.0;
+		
+		Method m;
+		try {
+			m = new Method(mi, bind);
+		} catch (Exception e1) {
+			return -1.0;
+		}
 		
 		if(!frequencies.containsKey(t)) {
 			return 0.0;
@@ -53,7 +69,9 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		}
 		int numseen = table.size();
 		
-		if (total == 0) { return -1; }
+		double cheat = 0;
+		
+		if (total == 0) { return cheat; }
 		
 		double eta = 10.0;
 		double p_unseen = ((double)numseen/((double)total + eta));
@@ -73,7 +91,7 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 			
 			if (tmp == 0) {
 				//System.out.println("tmp == 0");
-				return -1;
+				return cheat;
 			} else {
 				return p_unseen * (1.0/(double)tmp);
 			}
@@ -144,7 +162,12 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 			return;
 		
 		String className = cl.getQualifiedName();
-		Method newm = new Method(md, meth);
+		Method newm;
+		try {
+			newm = new Method(md, meth);
+		} catch (Exception e) {
+			return;
+		}
 		
 		
 		if(table.containsKey(className)) {
@@ -211,12 +234,22 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 				}
 			}
 			
-			Method newm = new Method(mi, meth);
+			Method newm;
+			try {
+				newm = new Method(mi, meth);
+			} catch (Exception e) {
+				return null;
+			}
 			ls.add(newm);
 			
 			return newm;
 		} else {
-			Method newm = new Method(mi, meth);
+			Method newm;
+			try {
+				newm = new Method(mi, meth);
+			} catch (Exception e) {
+				return null;
+			}
 			ArrayList<Method> ls = new ArrayList<Method>();
 			
 			ls.add(newm);
@@ -236,6 +269,19 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 				if((fd.getModifiers() & Modifier.PUBLIC) != 0) {
 					VariableDeclarationFragment fragment = (VariableDeclarationFragment)frag;
 					member_bindings.add(fragment.getName().resolveBinding());
+					
+					if(fd.getParent() instanceof AnonymousClassDeclaration) {
+						thisClassName = "anonymous";
+						continue;
+					}
+					if(fd.getParent() instanceof AnnotationTypeDeclaration) {
+						thisClassName = "annotation";
+						continue;
+					}
+					if(fd.getParent() instanceof EnumDeclaration) {
+						thisClassName = "enum";
+						continue;
+					}
 					
 					TypeDeclaration tdecl = (TypeDeclaration)fd.getParent();
 					ITypeBinding typ = tdecl.resolveBinding();

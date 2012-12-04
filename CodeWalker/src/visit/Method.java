@@ -158,13 +158,21 @@ public class Method implements Serializable {
 		isField = true;
 	}
 	
-	public Method(ASTNode exp, IMethodBinding meth)
+	public Method(ASTNode exp, IMethodBinding meth) throws Exception
 	{
 		ctx = Context.findContext(exp);
 		
-		className = meth.getDeclaringClass().getQualifiedName();
+		ITypeBinding cls = meth.getDeclaringClass();
+		if(cls == null)
+			throw new Exception("something");
 		
-		returnType = meth.getReturnType().getQualifiedName();
+		className = cls.getQualifiedName();
+		
+		ITypeBinding ret = meth.getReturnType();
+		if(ret == null)
+			throw new Exception("something");
+		
+		returnType = ret.getQualifiedName();
 		ITypeBinding []typs = meth.getParameterTypes();
 		name = meth.getName();
 		
@@ -172,6 +180,8 @@ public class Method implements Serializable {
 		
 		int i = 0;
 		for(ITypeBinding typ : meth.getParameterTypes()) {
+			if(typ == null)
+				throw new Exception("arg null");
 			argumentTypes[i] = typ.getQualifiedName();
 			++i;
 		}

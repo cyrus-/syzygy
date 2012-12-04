@@ -41,7 +41,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	private static boolean SHOW_TRAINING = false;
 	private static File PROJECT_DIR = null;
 	
-	private static final String PROJECT = "jfreechart";
+	private static final String PROJECT = "batik";
 
 	public SampleAction() {
 		
@@ -113,6 +113,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		final int size = ls.size();
 		double total = 0.0;
 		double nonzerototal = 0.0;
+		double cheat = 0;
 		int tenperc = max(1, size / RATIO);
 		
 		for(int i = 0; i < ITERATIONS; ++i) {
@@ -129,6 +130,12 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			output_file = new FileWriter("data.tokens" + i);
 			output_file_buffer = new BufferedWriter(output_file);
 			
+			FileWriter output_file2 = null;
+			BufferedWriter output_file_buffer2 = null;
+			
+			output_file2 = new FileWriter("data.stats" + i);
+			output_file_buffer2 = new BufferedWriter(output_file2);
+			
 			output_file_buffer.write("" + tenperc);
 			output_file_buffer.newLine();
 			for(File test : outls) {
@@ -137,10 +144,11 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			}
 			output_file_buffer.flush();
 			
-			Predictor pred = new Predictor(lit, var, methods, output_file_buffer);
+			Predictor pred = new Predictor(lit, var, methods, output_file_buffer, output_file_buffer2);
 			
 			double thistotal = 0.0;
 			double thisnonzerototal = 0.0;
+			double thischeat = 0;
 			
 			System.out.println("======> Need to test with " + outls.size() + " files");
 			int file_cur = 0;
@@ -150,6 +158,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 				double thisfile = pred.test(new JavaFile(test, prj), test);
 				thistotal += thisfile;
 				thisnonzerototal += pred.get_nonzero_test();
+				thischeat += pred.get_nonzerototal_test();
 
 				System.out.println("==> " + file_cur + "/" + outls.size() + " " + test.getName() + " got " + thisfile);
 			}
@@ -158,6 +167,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			
 			total += thistotal / (double)outls.size();
 			nonzerototal += thisnonzerototal / (double)outls.size();
+			cheat += thischeat/ (double)outls.size();
 			
 			ls.addAll(outls);
 			
@@ -165,6 +175,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		}
 		
 		System.out.println("====> Non Zero Success Rate: " + nonzerototal / (double)ITERATIONS);
+		System.out.println("====> Cheat Success Rate: " + cheat / (double)ITERATIONS);
 		
 		return total / (double)ITERATIONS;
 	}

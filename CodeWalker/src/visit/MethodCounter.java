@@ -98,35 +98,49 @@ public class MethodCounter extends ASTVisitor {
 		if (var.getStartPosition() < offset) {
 			ITypeBinding bind = var.getType().resolveBinding();
 			
+			try {
 			if(bind != null)
 				addMethods(bind.getJavaElement());
+			} catch(NullPointerException e) {
+				return false;
+			}
 		}
 		return false;
 	}
 	
 	public boolean visit (FieldDeclaration var) {
-		if (var.getStartPosition() < offset) {
-			ITypeBinding bind = var.getType().resolveBinding();
-			if(bind != null)
-				addMethods(bind.getJavaElement());
+		try {
+			if (var.getStartPosition() < offset) {
+				ITypeBinding bind = var.getType().resolveBinding();
+				if(bind != null)
+					addMethods(bind.getJavaElement());
+			}
+			return false;
+		} catch(NullPointerException e) {
+			return false;
 		}
-		return false;
 	}
 	
 	public boolean visit (VariableDeclarationExpression var) {
-		if (var.getStartPosition() < offset) {
-			ITypeBinding bind = var.getType().resolveBinding();
-			if(bind != null)
-				addMethods(bind.getJavaElement());
+		try {
+			if (var.getStartPosition() < offset) {
+				ITypeBinding bind = var.getType().resolveBinding();
+				if(bind != null)
+					addMethods(bind.getJavaElement());
+			}
+		} catch(NullPointerException e) {
 		}
 		return false;
 	}
 	
 	public boolean visit (VariableDeclarationStatement var) {
-		if (var.getStartPosition() < offset) {
-			ITypeBinding bind = var.getType().resolveBinding();
-			if(bind != null)
-				addMethods(bind.getJavaElement());
+		try {
+			if (var.getStartPosition() < offset) {
+				ITypeBinding bind = var.getType().resolveBinding();
+				if(bind != null)
+					addMethods(bind.getJavaElement());
+			}
+		} catch(NullPointerException e) {
 		}
 		return false;
 	}
@@ -142,7 +156,12 @@ public class MethodCounter extends ASTVisitor {
 				continue;
 			}
 			
-			Method mt = new Method(m, mi);
+			Method mt;
+			try {
+				mt = new Method(m, mi);
+			} catch (Exception e) {
+				continue;
+			}
 			
 			if ((mt.getReturnType().equals(typ))) {
 				for (Context.ContextType c : Context.ContextType.values()) {
