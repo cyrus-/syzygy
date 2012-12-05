@@ -2,6 +2,7 @@ package visit;
 
 import java.io.Serializable;
 import java.util.Hashtable;
+import java.util.Map.Entry;
 
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -22,6 +23,24 @@ public class VariableVisitor extends BaseVisitor implements Serializable {
 		} else {
 			return 0;
 		}
+	}
+	
+	public Integer getCountCtx(Context.ContextType ctx) {
+		Integer ret = 0;
+		for (Entry<TypeContext, Integer> e : frequencies.entrySet()) {
+			if (e.getKey().contextType.equals(ctx)) {
+				if (e.getValue() != null) ret += e.getValue();
+			}
+		}
+		return ret;
+	}
+	
+	public Integer getCountGen() {
+		Integer ret = 0;
+		for (Integer e : frequencies.values()) {
+			if (e != null) ret += e;
+		}
+		return ret;
 	}
 	
 	public boolean visit(ImportDeclaration decl) {

@@ -1,6 +1,7 @@
 package visit;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Hashtable;
 
 import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
@@ -27,6 +28,61 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 	private Hashtable<String, Hashtable<String, Hashtable<Context.ContextType, Integer> > > enumFrequencies = new Hashtable<String, Hashtable<String, Hashtable<Context.ContextType, Integer> > >();
 	private Hashtable<String, Hashtable<Context.ContextType, Integer> > stringFrequencies = new Hashtable<String, Hashtable<Context.ContextType, Integer> >();
 	
+	public int getCountCtx(Context.ContextType ctx) {
+		int ret = 0;
+		
+		ret += countAllInts(ctx);
+		ret += countAllDoubles(ctx);
+		ret += countAllFloats(ctx);
+		ret += countAllStrings(ctx);
+		ret += countAllEnums(ctx);
+		
+		return ret;
+	}
+	
+	private int countTables (Collection<Hashtable<Context.ContextType, Integer>> tables) {
+		int ret = 0;
+		for (Hashtable<Context.ContextType, Integer> t : tables) {
+			for (Integer i : t.values()){
+				if (i != null) ret += i;
+			}
+		}
+		
+		return ret;
+	}
+	
+	
+	public int getCountGen() {
+		
+		int ret = 0;
+		
+		ret += countTables(intFrequencies.values());
+		ret += countTables(doubleFrequencies.values());
+		ret += countTables(floatFrequencies.values());
+		ret += countTables(stringFrequencies.values());
+		
+		for (Hashtable<String, Hashtable<Context.ContextType, Integer> > table : enumFrequencies.values()) {
+			ret += countTables(table.values());
+		}
+		
+		return ret;
+	}
+	
+    private int countAllEnums(Context.ContextType ctx) {
+		int total = 0;
+		
+		assert(enumFrequencies != null);
+		
+		for (Hashtable<String, Hashtable<Context.ContextType, Integer> > table : enumFrequencies.values()) {
+			for(Hashtable<Context.ContextType, Integer> inner : table.values()) {
+				if(inner.containsKey(ctx)) {
+					total += inner.get(ctx);
+				}
+			}
+		}
+		
+		return total;
+    }
 	
 	
 	public boolean visit(NumberLiteral literal)
@@ -508,8 +564,21 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 			
 			int total = countEnumsOfType(typName, t.contextType);
 			
-			if(total == 0)
+			if(total == 0) {
+				// reduce duplication
+				if ((exp instanceof SimpleName) || (exp instanceof QualifiedName)) {
+					ITypeBinding typ = exp.resolveTypeBinding();
+					
+					if (typ == null) return 0;
+					if (typ.isEnum() == false) return 0;
+					total = typ.getDeclaredFields().length;
+					if (total == 0) return 0;
+					
+					return 1/(double)total;
+							
+				}
 				return 0.0;
+			}
 			
 			return (double)countEnumsOfTypeWithOption(typName, option, t.contextType) / (double)total;
 		}

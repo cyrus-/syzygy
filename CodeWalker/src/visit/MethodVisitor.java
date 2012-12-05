@@ -109,6 +109,28 @@ public class MethodVisitor extends BaseVisitor implements Serializable {
 		return total;
 	}
 	
+	public int getCountCtx(Context.ContextType ctx) {
+		int ret = 0;
+		for (Entry<TypeContext, Hashtable<Method, Integer>> t : frequencies.entrySet()) {
+			if (t.getKey().contextType.equals(ctx)) {
+			  for (Integer i : t.getValue().values()) {
+			      if (i != null) ret += i;
+		      }
+			}
+		}
+		return ret;
+	}
+	
+	public int getCountGen () {
+		int ret = 0;
+		for (Hashtable<Method, Integer> t : frequencies.values()) {
+			for (Integer i : t.values()) {
+			    if (i != null) ret += i;
+			}
+		}
+		return ret;
+	}
+	
 	private boolean hasUsedMethod(IMethodBinding meth)
 	{
 		ITypeBinding cl = meth.getDeclaringClass();

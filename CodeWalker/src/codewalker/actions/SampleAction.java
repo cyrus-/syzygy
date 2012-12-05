@@ -32,233 +32,26 @@ import dir.JavaFile;
 
 public class SampleAction implements IWorkbenchWindowActionDelegate {
 	private IWorkbenchWindow window;
-	private static LiteralVisitor lit = null;
-	private static VariableVisitor var = null;
-	private static MethodVisitor methods = null;
-	private static Random generator = new Random();
-	private static int RATIO = 10;
-	private static int ITERATIONS = 10;
-	private static boolean SHOW_TRAINING = false;
-	private static File PROJECT_DIR = null;
 	
-	private static final String PROJECT = "batik";
-
 	public SampleAction() {
 		
 	}
 	
-	private static void getAllFiles(File dir, LinkedList<File> ls)
-	{
-		File[] files = dir.listFiles();
-		
-		for (File child : files) {
-			if (!child.isDirectory()) {
-				continue;
-			}
-			
-			getAllFiles(child, ls);
-		}
-		
-		// add child files
-		for (File child : files) {
-			if (child.isFile() && child.getName().toLowerCase().endsWith(".java")) {
-				ls.add(child);
-			}
-		}
-	}
 	
-	private static void initData()
-	{
-		lit = new LiteralVisitor();
-		var = new VariableVisitor();
-		methods = new MethodVisitor();
-	}
 	
-	private static void trainWithList(IJavaProject prj, LinkedList<File> ls)
-	{
-		initData();
-		for(File file : ls) {
-			if(SHOW_TRAINING)
-				System.out.println("Training on " + file.getName());
-			JavaFile jfile = new JavaFile(file, prj);
-			jfile.accept(lit);
-			jfile.accept(methods);
-			jfile.accept(var);
-		}
-	}
-	
-	private static LinkedList<File> pick10percFiles(LinkedList<File> ls, int howmany)
-	{
-		LinkedList<File> ret = new LinkedList<File>();
-		
-		/*
-		for(int i = 0; i < howmany; ++i) {
-			int index = 0;
-			ret.add(ls.get(index));
-			ls.remove(index);
-		}*/
-		
-		for(int i = 0; i < howmany; ++i) {
-			int size = ls.size();
-			int index = generator.nextInt(size);
-			ret.add(ls.get(index));
-			ls.remove(index);
-		}
-		
-		return ret;
-	}
-	
-	private static double trainLeave10percOut(IJavaProject prj, LinkedList<File> ls) throws IOException
-	{
-		final int size = ls.size();
-		double total = 0.0;
-		double nonzerototal = 0.0;
-		double cheat = 0;
-		int tenperc = max(1, size / RATIO);
-		
-		for(int i = 0; i < ITERATIONS; ++i) {
-			LinkedList<File> outls = pick10percFiles(ls, tenperc);
-			System.out.println("=========== ITERATION " + i + " ===========");
-			
-			trainWithList(prj, ls);
-			
-			//print();
-			
-			FileWriter output_file = null;
-			BufferedWriter output_file_buffer = null;
-			
-			output_file = new FileWriter("data.tokens" + i);
-			output_file_buffer = new BufferedWriter(output_file);
-			
-			FileWriter output_file2 = null;
-			BufferedWriter output_file_buffer2 = null;
-			
-			output_file2 = new FileWriter("data.stats" + i);
-			output_file_buffer2 = new BufferedWriter(output_file2);
-			
-			output_file_buffer.write("" + tenperc);
-			output_file_buffer.newLine();
-			for(File test : outls) {
-				output_file_buffer.write(test.getAbsolutePath().substring(PROJECT_DIR.getAbsolutePath().length()).substring(1) );
-				output_file_buffer.newLine();
-			}
-			output_file_buffer.flush();
-			
-			Predictor pred = new Predictor(lit, var, methods, output_file_buffer, output_file_buffer2);
-			
-			double thistotal = 0.0;
-			double thisnonzerototal = 0.0;
-			double thischeat = 0;
-			
-			System.out.println("======> Need to test with " + outls.size() + " files");
-			int file_cur = 0;
-			for(File test : outls) {
-				file_cur++;
-				
-				double thisfile = pred.test(new JavaFile(test, prj), test);
-				thistotal += thisfile;
-				thisnonzerototal += pred.get_nonzero_test();
-				thischeat += pred.get_nonzerototal_test();
-
-				System.out.println("==> " + file_cur + "/" + outls.size() + " " + test.getName() + " got " + thisfile);
-			}
-			
-			output_file_buffer.close();
-			
-			total += thistotal / (double)outls.size();
-			nonzerototal += thisnonzerototal / (double)outls.size();
-			cheat += thischeat/ (double)outls.size();
-			
-			ls.addAll(outls);
-			
-			assert(ls.size() == size);
-		}
-		
-		System.out.println("====> Non Zero Success Rate: " + nonzerototal / (double)ITERATIONS);
-		System.out.println("====> Cheat Success Rate: " + cheat / (double)ITERATIONS);
-		
-		return total / (double)ITERATIONS;
-	}
-	
-	private static int max(int i, int j) {
-		if(i > j)
-			return i;
-		else
-			return j;
-	}
-
-	public void serialize(String fileName)
-	{
-		try {
-			FileOutputStream fout = new FileOutputStream(fileName);
-			
-			ObjectOutputStream out = new ObjectOutputStream(fout);
-			
-			out.writeObject(methods);
-			out.writeObject(lit);
-			out.writeObject(var);
-			
-			out.close();
-			fout.close();
-			
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public void deserialize(String fileName)
-	{
-		try {
-			FileInputStream fis = new FileInputStream(fileName);
-			ObjectInputStream in = new ObjectInputStream(fis);
-			
-			methods = (MethodVisitor)in.readObject();
-			lit = (LiteralVisitor)in.readObject();
-			var = (VariableVisitor)in.readObject();
-			
-			in.close();
-			fis.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public static void print()
-	{
-		var.print();
-		lit.print();
-		methods.print();
-	}
 
 	public void run(IAction action)
 	{
-		IProject proj = ResourcesPlugin.getWorkspace().getRoot().getProject(PROJECT);
-		
-		IJavaProject jproj = JavaCore.create(proj);
-		LinkedList<File> allFiles = new LinkedList<File>();
-		PROJECT_DIR = proj.getLocation().toFile();
-		
-		getAllFiles(PROJECT_DIR, allFiles);
-		
-		double acc;
+		RunTests r1 = new RunTests("ant");
+		RunTests r2 = new RunTests("jfreechart");
+		r1.start();
+		r2.start();
 		try {
-			acc = trainLeave10percOut(jproj, allFiles);
-			System.out.println("====> Success rate " + acc);
-			System.out.println("Total Predictions: " + Tracer.numPredTotal);
-			System.out.println("0.0 Predictions: " + Tracer.numPredZero);
-			System.out.println("Positive Predictions in Methods: " + Tracer.numMethodsPositive);
-			System.out.println("Negative Predictions in Methods: " + Tracer.numMethodsMinus1);
-
-			MessageDialog.openInformation(window.getShell(), "CodeWalker",
-					"Statistics were collected");
-		} catch (IOException e) {
-			MessageDialog.openInformation(window.getShell(), "CodeWalker", "Failed to collect statistics");
+			r2.join();
+			r1.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 

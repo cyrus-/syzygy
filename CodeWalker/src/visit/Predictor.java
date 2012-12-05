@@ -96,11 +96,29 @@ public class Predictor extends BaseVisitor {
 		double thisProb = 0.0;
 		
 		if(total == 0) {
-			if (log) numPreds++;
-			if (log) Tracer.numPredZero++;
-			if(log) dumpExpression1(exp);
-			return 0;
-		}
+			
+			numLit = lit.getCountCtx(t.contextType);
+			numVar = variable.getCountCtx(t.contextType);
+			numMethods = methods.getCountCtx(t.contextType);
+			
+			total = numLit + numVar + numMethods;
+			
+			if (total == 0) {
+				numLit = lit.getCountGen();
+				numVar = variable.getCountGen();
+				numMethods = methods.getCountGen();
+				
+				total = numLit + numVar + numMethods;
+				
+				if (total == 0) {
+					if (log) numPreds++;
+					if (log) Tracer.numPredTotal++;
+					if (log) Tracer.numPredZero++;
+					return 0;
+				}
+			}
+		} 
+		
 		
 		if (isLiteral(exp)) {
 			try {
@@ -188,6 +206,7 @@ public class Predictor extends BaseVisitor {
 			return -1;
 		}
 		
+		
 		if (log) {
 		Tracer.numPredTotal++;
 		if(thisProb == 0.0)
@@ -197,6 +216,9 @@ public class Predictor extends BaseVisitor {
 			nonZeroProb += thisProb;
 		}
 		totalProb += thisProb;
+		assert (thisProb <= 1);
+		assert (thisProb >= 0);
+		assert(numNonTotalZPreds <= numPreds);
 		
 		dumpExpression1(exp);
 		}
