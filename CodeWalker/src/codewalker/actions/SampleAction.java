@@ -22,12 +22,9 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
-import visit.LiteralVisitor;
-import visit.MethodVisitor;
-import visit.Predictor;
-import visit.Tracer;
-import visit.VariableVisitor;
-import dir.JavaFile;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 
 public class SampleAction implements IWorkbenchWindowActionDelegate {
@@ -37,22 +34,29 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		
 	}
 	
+	private static final String[] projects = {"ant", "antlr"};
 	
+	
+	private String[] rest (int i) {
+		String[] result = new String[projects.length - 1];
+		for (int j = 0; j < projects.length; j++) {
+			if (i == j) continue;
+			result[i] = projects[i];
+		}
+		return result;
+	}
 	
 
 	public void run(IAction action)
 	{
-		RunTests r1 = new RunTests("ant");
-		RunTests r2 = new RunTests("jfreechart");
-		r1.start();
-		r2.start();
-		try {
-			r2.join();
-			r1.join();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		
+		ExecutorService es = Executors.newFixedThreadPool(4);
+		
+		for (int i = 0; i < projects.length; i++) {
+			es.submit(new RunTests(projects[i], rest(i)));
 		}
+		
+		es.shutdown();
 	}
 
 	public void selectionChanged(IAction action, ISelection selection)
