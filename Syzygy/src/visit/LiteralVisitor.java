@@ -119,6 +119,14 @@ public class LiteralVisitor extends BaseVisitor implements Serializable {
 		return false;
 	}
 	
+	public enum E {
+		A, B, C;
+		
+		public E x(E e) {
+			return A;
+		}
+	}
+	
 	public static boolean qualifiedNameIsEnum(QualifiedName qn)
 	{
 		if(!qn.getQualifier().isQualifiedName()) {
