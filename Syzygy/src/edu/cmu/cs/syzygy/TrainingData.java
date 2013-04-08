@@ -7,52 +7,47 @@ public class TrainingData {
 	public NGram intData = new NGram(2);
 	public NGram floatingData = new NGram(2);
 	public NGram stringData = new NGram(2);
-
+	
+	public Table<SyntacticContext, String> literals = new Table<SyntacticContext, String>(); 
+	public Table<SyntacticContext, String> variables = new Table<SyntacticContext, String>();
+	public Table<SyntacticContext, String> methods = new Table<SyntacticContext, String>();
+	
 	public TrainingData() {
 	}
 	
 	public int getLiteralCount(SyntacticContext ctx, String type) {
-		// TODO Auto-generated method stub
-		return 0;
+		return literals.getCount(ctx, type);
 	}
 
 	public int getVariableCount(SyntacticContext ctx, String type) {
-		// TODO Auto-generated method stub
-		return 0;
+		return variables.getCount(ctx,  type);
 	}
 	
 	public int getMethodCount(SyntacticContext ctx, String type) {
-		// TODO Auto-generated method stub
-		return 0;
+		return methods.getCount(ctx, type);
 	}
 	
 	public int getLiteralCount(SyntacticContext ctx) {
-		// TODO Auto-generated method stub
-		return 0;
+		return literals.getCount1(ctx);
 	}
 
 	public int getVariableCount(SyntacticContext ctx) {
-		// TODO Auto-generated method stub
-		return 0;
+		return variables.getCount1(ctx);
 	}
 	
 	public int getMethodCount(SyntacticContext ctx) {
-		// TODO Auto-generated method stub
-		return 0;
+		return methods.getCount1(ctx);
 	}
 
 	public int getLiteralCount() {
-		// TODO Auto-generated method stub
-		return 0;
+		return literals.getTotal();
 	}
 
 	public int getVariableCount() {
-		// TODO Auto-generated method stub
-		return 0;
+		return variables.getTotal();
 	}
 
 	public int getMethodCount() {
-		// TODO Auto-generated method stub
-		return 0;
+		return methods.getTotal();
 	}
 }
