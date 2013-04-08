@@ -60,6 +60,11 @@ public class Predictor {
 	public double predict(NumberLiteral x, SyntacticContext ctx, String type) {
 		double formProb = calculateFormProb(SyntacticForm.LIT, ctx, type);
 		
+		if (isanint) {
+			return formProb * data.intData.prob(x.getToken());
+		} else {
+			return formProb * data.floatingData.prob(x.getToken());
+		}
 	}
 	
 	private String getExpectedType(NumberLiteral x) {
