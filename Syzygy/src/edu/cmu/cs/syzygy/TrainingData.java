@@ -3,11 +3,12 @@ package edu.cmu.cs.syzygy;
 import edu.cmu.cs.syzygy.lm.NGram;
 
 public class TrainingData {
-	
+
 	public NGram intData = new NGram(2);
 	public NGram floatingData = new NGram(2);
 	public NGram stringData = new NGram(2);
-	
+	public NGram charData = new NGram(2);
+
 	public Table<SyntacticContext, String> literals = new Table<SyntacticContext, String>(); 
 	public Table<SyntacticContext, String> variables = new Table<SyntacticContext, String>();
 	public Table<SyntacticContext, String> methods = new Table<SyntacticContext, String>();
