@@ -6,11 +6,11 @@ public class NGram {
 	
     }
     
-    void increment(String s) {
+    public void increment(String s) {
 	
     }
     
-    double prob(String s) {
+    public double prob(String s) {
 	return 0.0;
     }
 

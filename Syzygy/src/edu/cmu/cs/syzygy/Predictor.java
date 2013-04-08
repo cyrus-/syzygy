@@ -2,6 +2,7 @@ package edu.cmu.cs.syzygy;
 
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.StringLiteral;
+import edu.cmu.cs.syzygy.lm.NGram;
 
 import visit.Tracer;
 
