@@ -2,11 +2,14 @@ package edu.cmu.cs.syzygy;
 
 public class TrainingData {
 	
-	public TrainingData() {
-		
-		
-	}
+	public NGram intData;
+	public NGram floatingData;
 
+	public TrainingData() {
+		intData = new NGram();
+		floatingData = new NGram();
+	}
+	
 	public int getLiteralCount(SyntacticContext ctx, String type) {
 		// TODO Auto-generated method stub
 		return 0;
