@@ -82,6 +82,8 @@ public class Predictor {
 	public double predict(BooleanLiteral b, SyntacticContext ctx, String type) {
 		// TRUE = FALSE ???
 		return (calculateFormProb(SyntacticForm.LIT, ctx, type) * 0.5);
+		
+		int b = 0b101;
 	}
 
 	/*
