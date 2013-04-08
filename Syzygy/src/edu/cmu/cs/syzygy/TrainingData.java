@@ -7,6 +7,7 @@ public class TrainingData {
 	public NGram intData = new NGram();
 	public NGram floatingData = new NGram();
 	public NGram stringData = new NGram();
+	public NGram charData = new NGram();
 
 	public TrainingData() {
 	}

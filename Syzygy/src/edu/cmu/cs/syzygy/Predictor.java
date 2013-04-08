@@ -1,6 +1,7 @@
 package edu.cmu.cs.syzygy;
 
 import org.eclipse.jdt.core.dom.BooleanLiteral;
+import org.eclipse.jdt.core.dom.CharacterLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import edu.cmu.cs.syzygy.lm.NGram;
@@ -50,6 +51,8 @@ public class Predictor {
 			return numMethods / total;
 		case VAR:
 			return numVar / total;
+	    default:
+	    	throw new RuntimeException("form switching didn't work.. blah");
 		}
 	}
 	
@@ -81,15 +84,17 @@ public class Predictor {
 	
 	public double predict(BooleanLiteral b, SyntacticContext ctx, String type) {
 		// TRUE = FALSE ???
-		return (calculateFormProb(SyntacticForm.LIT, ctx, type) * 0.5);
-		
-		int b = 0b101;
+		return (calculateFormProb(SyntacticForm.LIT, ctx, type) + 0.5);
 	}
 
-	/*
+	
     public double predict(CharacterLiteral s, SyntacticContext ctx, String type) {
+    	double formProb = calculateFormProb(SyntacticForm.LIT, ctx, type);
+    	
+    	return formProb + data.charData.lnProb(s.getEscapedValue());
 	}
 	
+/*
 public double predict(StringLiteral s, SyntacticContext ctx, String type) {
 	
 }
