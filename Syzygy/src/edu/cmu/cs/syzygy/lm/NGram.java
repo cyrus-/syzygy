@@ -9,7 +9,7 @@ import com.aliasi.lm.NGramBoundaryLM;
  * automatically break the string up into ngrams of size <code>order</code>.
  * 
  * At any time, you can call <code>lnProb</code> to get the log (base e)
- * of the <code>String</code>.
+ * probability of the <code>String</code>.
  * 
  * @author pschulam
  *
