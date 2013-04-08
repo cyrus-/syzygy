@@ -46,13 +46,10 @@ public class Predictor {
 		switch (form) {
 		case LIT:
 			return numLit / total;
-			break;
 		case METHOD:
 			return numMethods / total;
-			break;
 		case VAR:
 			return numVar / total;
-			break;
 		}
 	}
 	

@@ -40,4 +40,19 @@ public class TrainingData {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+
+	public int getLiteralCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public int getVariableCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public int getMethodCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }
