@@ -1,5 +1,6 @@
 package edu.cmu.cs.syzygy;
 
+import org.eclipse.jdt.core.dom.BooleanLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import edu.cmu.cs.syzygy.lm.NGram;
@@ -55,19 +56,55 @@ public class Predictor {
 		}
 	}
 	
+	
+	private boolean isInt(String type) {
+		return (type.equals("int") || type.equals("short") || type.equals("long") 
+				|| type.equals("byte"));
+	}
+
+	
 	/* different predict methods for different subtypes of AST Node 
 	 * public double predict();
 	 */
 	public double predict(NumberLiteral x, SyntacticContext ctx, String type) {
 		double formProb = calculateFormProb(SyntacticForm.LIT, ctx, type);
 		
-		if (isanint) {
-			return formProb * data.intData.prob(x.getToken());
+		if (isInt(type)) {
+			return formProb + data.intData.lnProb(Util.normalizeNumberLiteral(x, type));
 		} else {
-			return formProb * data.floatingData.prob(x.getToken());
+			return formProb + data.floatingData.lnProb(Util.normalizeNumberLiteral(x, type));
 		}
 	}
 	
+	public double predict(StringLiteral s, SyntacticContext ctx, String type) {
+		double formProb = calculateFormProb(SyntacticForm.LIT, ctx, type);
+		
+		return formProb + data.stringData.lnProb(s.getLiteralValue());
+	}
+	
+	public double predict(BooleanLiteral b, SyntacticContext ctx, String type) {
+		// TRUE = FALSE ???
+		return (calculateFormProb(SyntacticForm.LIT, ctx, type) * 0.5);
+	}
+
+	/*
+    public double predict(CharacterLiteral s, SyntacticContext ctx, String type) {
+	}
+	
+public double predict(StringLiteral s, SyntacticContext ctx, String type) {
+	
+}
+public double predict(StringLiteral s, SyntacticContext ctx, String type) {
+	
+}
+public double predict(StringLiteral s, SyntacticContext ctx, String type) {
+	
+}
+public double predict(StringLiteral s, SyntacticContext ctx, String type) {
+	
+}
+*/
+
 	private String getExpectedType(NumberLiteral x) {
 		// TODO Auto-generated method stub
 		return null;

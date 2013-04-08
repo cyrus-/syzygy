@@ -1,13 +1,14 @@
 package edu.cmu.cs.syzygy;
 
+import edu.cmu.cs.syzygy.lm.NGram;
+
 public class TrainingData {
 	
-	public NGram intData;
-	public NGram floatingData;
+	public NGram intData = new NGram();
+	public NGram floatingData = new NGram();
+	public NGram stringData = new NGram();
 
 	public TrainingData() {
-		intData = new NGram();
-		floatingData = new NGram();
 	}
 	
 	public int getLiteralCount(SyntacticContext ctx, String type) {
