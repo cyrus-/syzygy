@@ -3,11 +3,11 @@ package edu.cmu.cs.syzygy;
 import edu.cmu.cs.syzygy.lm.NGram;
 
 public class TrainingData {
-	
-	public NGram intData = new NGram();
-	public NGram floatingData = new NGram();
-	public NGram stringData = new NGram();
-	public NGram charData = new NGram();
+
+	public NGram intData = new NGram(2);
+	public NGram floatingData = new NGram(2);
+	public NGram stringData = new NGram(2);
+	public NGram charData = new NGram(2);
 
 	public TrainingData() {
 	}

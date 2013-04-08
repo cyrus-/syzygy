@@ -34,7 +34,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		
 	}
 	
-	private static final String[] projects = {"ant", "antlr"};
+	private static final String[] projects = {"planet"};
 	
 	
 	private String[] rest (int i) {

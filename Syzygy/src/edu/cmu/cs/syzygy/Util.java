@@ -19,5 +19,20 @@ public class Util {
 			return Double.toString(Double.parseDouble(x.getToken()));
 		} else throw new RuntimeException("weird number literal: " + x.getToken());
 	}
+	
+	public static boolean isInt(NumberLiteral lit)
+	{
+		return lit.resolveTypeBinding().getQualifiedName().equals("int");
+	}
+	
+	public static boolean isFloat(NumberLiteral lit)
+	{
+		return lit.resolveTypeBinding().getQualifiedName().equals("float");
+	}
+	
+	public static boolean isDouble(NumberLiteral lit)
+	{
+		return lit.resolveTypeBinding().getQualifiedName().equals("double");
+	}
 
 }

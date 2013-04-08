@@ -19,6 +19,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jface.dialogs.MessageDialog;
 
 import dir.JavaFile;
+import edu.cmu.cs.syzygy.TrainingVisitor;
 
 import visit.LiteralVisitor;
 import visit.MethodVisitor;
@@ -303,17 +304,29 @@ public class RunTests implements Runnable {
 		}
 	}
 	
+	private void trainFiles(IJavaProject jproj, LinkedList<File> ls)
+	{
+		TrainingVisitor vit = new TrainingVisitor();
+		
+		for(File file : ls) {
+			JavaFile jfile = new JavaFile(file, jproj);
+			jfile.accept(vit);
+		}
+	}
+	
 	public void run(){
 		IProject proj = ResourcesPlugin.getWorkspace().getRoot().getProject(project);
 		
 		IJavaProject jproj = JavaCore.create(proj);
 		LinkedList<File> allFiles = new LinkedList<File>();
 		PROJECT_DIR = proj.getLocation().toFile();
+		double acc;
 		
 		getAllFiles(PROJECT_DIR, allFiles);
+		trainFiles(jproj, allFiles);
+		return;
 		
-		
-		double acc;
+		/*
 		try {
 			BufferedWriter statsFile = new BufferedWriter (new FileWriter(project + ".stats"));
 			acc = trainLeave10percOut(jproj, allFiles, statsFile);
@@ -328,6 +341,6 @@ public class RunTests implements Runnable {
 			
 		} catch (IOException e) {
 			System.err.println("Failed to collect statistics: " + e.getMessage());
-		}
+		}*/
 	}
 }
