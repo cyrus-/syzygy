@@ -1,5 +1,7 @@
 package edu.cmu.cs.syzygy;
 
+import edu.cmu.cs.syzygy.lm.NGram;
+
 public class TrainingData {
 	
 	public NGram intData;
@@ -36,6 +38,21 @@ public class TrainingData {
 	}
 	
 	public int getMethodCount(SyntacticContext ctx) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public int getLiteralCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public int getVariableCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public int getMethodCount() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
