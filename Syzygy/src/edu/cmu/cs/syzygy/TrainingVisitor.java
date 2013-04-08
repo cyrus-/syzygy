@@ -6,9 +6,15 @@ import org.eclipse.jdt.core.dom.NumberLiteral;
 public class TrainingVisitor extends ASTVisitor {
 	public TrainingData data;
 	
-	private boolean visit(NumberLiteral lit)
+	public boolean visit(NumberLiteral lit)
 	{
-		data.intData.increment(lit.getToken());
+		System.out.println(lit + " " + lit.resolveTypeBinding());
+		if(Util.isInt(lit)) {
+			data.intData.increment(lit.getToken());
+		} else if(Util.isFloat(lit) || Util.isDouble(lit)) {
+			data.floatingData.increment(lit.getToken());
+		}
+		
 		return false;
 	}
 	

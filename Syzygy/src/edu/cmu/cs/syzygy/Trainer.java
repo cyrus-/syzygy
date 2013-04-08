@@ -11,7 +11,7 @@ public class Trainer {
 	
 	public TrainingData train() {
 		TrainingVisitor visitor = new TrainingVisitor(); 
-				
+		
 		for (CompilationUnit c : trainingUnits) {
 			c.accept(visitor);
 		}

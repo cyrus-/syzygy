@@ -18,7 +18,7 @@ public class Predictor {
 		LIT, VAR, METHOD;
 	}
 	
-	public double calculateFormProb(SyntacticForm form, SyntacticContext ctx, String type) {
+	public double calculateFormProb(SyntacticForm form, SyntacticContext ctx, String type) throws InvalidDataException {
 		int numLit = data.getLiteralCount(ctx, type);
 		int numVar = data.getVariableCount(ctx, type);
 		int numMethods = data.getVariableCount(ctx, type);
@@ -51,6 +51,7 @@ public class Predictor {
 		case VAR:
 			return numVar / total;
 		}
+		return 0.0;
 	}
 	
 	
@@ -63,7 +64,7 @@ public class Predictor {
 	/* different predict methods for different subtypes of AST Node 
 	 * public double predict();
 	 */
-	public double predict(NumberLiteral x, SyntacticContext ctx, String type) {
+	public double predict(NumberLiteral x, SyntacticContext ctx, String type) throws InvalidDataException {
 		double formProb = calculateFormProb(SyntacticForm.LIT, ctx, type);
 		
 		if (isInt(type)) {
@@ -73,17 +74,15 @@ public class Predictor {
 		}
 	}
 	
-	public double predict(StringLiteral s, SyntacticContext ctx, String type) {
+	public double predict(StringLiteral s, SyntacticContext ctx, String type) throws InvalidDataException {
 		double formProb = calculateFormProb(SyntacticForm.LIT, ctx, type);
 		
 		return formProb + data.stringData.lnProb(s.getLiteralValue());
 	}
 	
-	public double predict(BooleanLiteral b, SyntacticContext ctx, String type) {
+	public double predict(BooleanLiteral b, SyntacticContext ctx, String type) throws InvalidDataException {
 		// TRUE = FALSE ???
 		return (calculateFormProb(SyntacticForm.LIT, ctx, type) * 0.5);
-		
-		int b = 0b101;
 	}
 
 	/*
@@ -115,6 +114,6 @@ public double predict(StringLiteral s, SyntacticContext ctx, String type) {
 	}
 
 	public double predict(StringLiteral s) {
-		
+		return 0.0;
 	}
 }
