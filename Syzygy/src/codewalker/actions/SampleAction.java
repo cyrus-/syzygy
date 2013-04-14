@@ -63,7 +63,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	}
 
 
-	public void dispose() {
+	public void dispose() {	
 	}
 
 
