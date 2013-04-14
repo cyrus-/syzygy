@@ -49,13 +49,16 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 
 	public void run(IAction action)
 	{
+		new RunTests(projects[0], rest(0)).run();
+		
+		/*
 		ExecutorService es = Executors.newFixedThreadPool(4);
 		
 		for (int i = 0; i < projects.length; i++) {
 			es.submit(new RunTests(projects[i], rest(i)));
 		}
 		
-		es.shutdown();
+		es.shutdown();*/
 	}
 
 	public void selectionChanged(IAction action, ISelection selection)

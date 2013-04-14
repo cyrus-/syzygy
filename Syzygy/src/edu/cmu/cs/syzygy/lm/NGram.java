@@ -21,7 +21,7 @@ public class NGram {
     
     public NGram(int order) {
     	this.order = order;
-		//this.lm = new NGramBoundaryLM(order);
+		this.lm = new NGramBoundaryLM(order);
     }
     
     public int order() {
@@ -29,7 +29,7 @@ public class NGram {
     }
     
     public void increment(String s) {
-    	//lm.train(s);
+    	lm.train(s);
     }
     
     public double lnProb(String s) {
