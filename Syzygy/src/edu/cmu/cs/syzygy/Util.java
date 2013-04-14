@@ -47,7 +47,6 @@ public class Util {
 		return lit.resolveTypeBinding().getQualifiedName().equals("double");
 	}
 
-<<<<<<< HEAD
 	public static SyntacticContext findContext(ASTNode node)
 	{
 		ASTNode parent = node.getParent();
