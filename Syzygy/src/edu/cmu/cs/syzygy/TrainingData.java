@@ -39,7 +39,7 @@ public class TrainingData {
 	}
 	
 	public int getMethodCount(SyntacticContext ctx) {
-		return methods.getCount1(ctx);
+		return methods.getCount(ctx);
 	}
 
 	public int getLiteralCount() {
