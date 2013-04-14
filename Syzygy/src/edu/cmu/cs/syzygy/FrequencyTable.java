@@ -2,7 +2,6 @@ package edu.cmu.cs.syzygy;
 
 import java.util.Hashtable;
 
-
 public class FrequencyTable<T> {
 	private Hashtable<SyntacticContext, Integer> ctxCount;
 	private Hashtable<Pair<SyntacticContext, String>, Integer> ctxtypeCount;

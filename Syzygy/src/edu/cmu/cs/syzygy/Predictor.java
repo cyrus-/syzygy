@@ -142,7 +142,7 @@ public class Predictor {
 	}
 
 	
-    public double predict(CharacterLiteral s, SyntacticContext ctx, String type) {
+    public double predict(CharacterLiteral s, SyntacticContext ctx, String type) throws InvalidDataException {
     	double formProb = calculateFormProb(SyntacticForm.LIT, ctx, type);
     	
     	return formProb + data.charData.lnProb(s.getEscapedValue());

@@ -10,12 +10,12 @@ import java.util.Hashtable;
  *
  */
 public class Table<T1, T2> {
-	private Hashtable<T1, Integer> t1data;
-	private Hashtable<T2, Integer> t2data;
+	private Hashtable<T1, Integer> t1data = new Hashtable<T1, Integer>();
+	private Hashtable<T2, Integer> t2data = new Hashtable<T2, Integer>();
 	
-	private Hashtable<Pair<T1, T2>, Integer> all;
+	private Hashtable<Pair<T1, T2>, Integer> all = new Hashtable<Pair<T1, T2>, Integer>();
 	
-	private int total;
+	private int total = 0;
 	
 	public void add(T1 t1, T2 t2)
 	{
@@ -55,6 +55,5 @@ public class Table<T1, T2> {
 	
 	public Table()
 	{
-		total = 0;
 	}
 }
