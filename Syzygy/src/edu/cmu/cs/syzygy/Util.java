@@ -1,6 +1,17 @@
 package edu.cmu.cs.syzygy;
 
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.ConditionalExpression;
+import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.InfixExpression;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NumberLiteral;
+import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+
+import visit.Context.ContextType;
 
 public class Util {
 	
@@ -35,4 +46,24 @@ public class Util {
 		return lit.resolveTypeBinding().getQualifiedName().equals("double");
 	}
 
+	public static SyntacticContext findContext(ASTNode node)
+	{
+		ASTNode parent = node.getParent();
+		
+		if(parent instanceof VariableDeclarationStatement) {
+			return SyntacticContext.DECL;
+		} else if(parent instanceof VariableDeclarationFragment) {
+			return SyntacticContext.DECL;
+		} else if(parent instanceof MethodInvocation) {
+			return SyntacticContext.CALL;
+		} else if(parent instanceof Block || parent instanceof ExpressionStatement) {
+			return SyntacticContext.STMT;
+		} else if(parent instanceof VariableDeclarationExpression) {
+			return SyntacticContext.DECL;
+		} else if(parent instanceof InfixExpression || parent instanceof ConditionalExpression) {
+			return SyntacticContext.CALL;
+		} else {
+			return SyntacticContext.OTHER;
+		}
+	}
 }
