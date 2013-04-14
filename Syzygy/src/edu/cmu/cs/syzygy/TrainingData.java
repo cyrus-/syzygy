@@ -1,5 +1,7 @@
 package edu.cmu.cs.syzygy;
 
+import org.eclipse.jdt.core.dom.IMethodBinding;
+
 import edu.cmu.cs.syzygy.lm.NGram;
 
 public class TrainingData {
@@ -11,7 +13,7 @@ public class TrainingData {
 
 	public Table<SyntacticContext, String> literals = new Table<SyntacticContext, String>(); 
 	public Table<SyntacticContext, String> variables = new Table<SyntacticContext, String>();
-	public Table<SyntacticContext, String> methods = new Table<SyntacticContext, String>();
+	public FrequencyTable<IMethodBinding> methods = new FrequencyTable<IMethodBinding>();
 	
 	public TrainingData() {
 	}
