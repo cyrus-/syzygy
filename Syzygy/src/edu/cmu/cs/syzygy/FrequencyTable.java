@@ -5,7 +5,8 @@ import java.util.Hashtable;
 public class FrequencyTable<T> {
 	private Table<SyntacticContext, String> countTable = new Table<SyntacticContext, String>();
 	
-	private Hashtable<Triple<SyntacticContext, String, T>, Integer> frequencies;
+	private Hashtable<Triple<SyntacticContext, String, T>, Integer> frequencies
+		= new Hashtable<Triple<SyntacticContext, String, T>, Integer>();
 	
 	public void add(SyntacticContext ctx, String typ, T data)
 	{

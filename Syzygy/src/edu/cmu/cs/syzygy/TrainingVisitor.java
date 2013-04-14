@@ -49,6 +49,8 @@ public class TrainingVisitor extends ASTVisitor {
 		if(bind == null)
 			return true;
 		
+		System.out.println(mi);
+		
 		IMethodBinding meth = mi.resolveMethodBinding();
 		
 		if(meth == null)
