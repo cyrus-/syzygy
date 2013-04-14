@@ -110,7 +110,6 @@ public class Predictor {
 	    default:
 	    	throw new RuntimeException("form switching didn't work.. blah");
 		}
-		return 0.0;
 	}
 	
 	

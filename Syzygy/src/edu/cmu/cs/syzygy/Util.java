@@ -1,5 +1,7 @@
 package edu.cmu.cs.syzygy;
 
+import java.util.Hashtable;
+
 import org.eclipse.jdt.core.dom.NumberLiteral;
 
 public class Util {
@@ -35,4 +37,15 @@ public class Util {
 		return lit.resolveTypeBinding().getQualifiedName().equals("double");
 	}
 
+	public static <T> void htInc (Hashtable<T, Integer> ht, T t) {
+		Integer tmp = ht.get(t);
+		if (tmp == null) tmp = 0;
+		ht.put(t, tmp + 1);
+	}
+	
+	public static <T> Integer htGetZero (Hashtable<T, Integer> ht, T t) {
+		Integer tmp = ht.get(t);
+		if (tmp == null) tmp = 0;
+		return tmp;
+	}
 }
