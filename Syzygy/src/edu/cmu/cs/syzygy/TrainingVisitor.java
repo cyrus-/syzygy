@@ -90,7 +90,7 @@ public class TrainingVisitor extends ASTVisitor {
 			return true;
 		
 		
-		data.methods.add(Util.findContext(mi), bind.getQualifiedName(), mi);
+		data.methods.add(Util.findContext(mi), bind.getQualifiedName(), meth);
 		return true;
 	}
 	
