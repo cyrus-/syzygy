@@ -43,7 +43,6 @@ public class TrainingVisitor extends ASTVisitor {
 		return false;
 	}
 	
-
 	public boolean visit(MethodInvocation mi)
 	{
 		ITypeBinding bind = mi.resolveTypeBinding();
@@ -55,11 +54,9 @@ public class TrainingVisitor extends ASTVisitor {
 		if(meth == null)
 			return true;
 		
-		
 		data.methods.add(Util.findContext(mi), bind.getQualifiedName(), meth);
 		return true;
 	}
-	
 	
 	public TrainingVisitor() {
 		data = new TrainingData();
