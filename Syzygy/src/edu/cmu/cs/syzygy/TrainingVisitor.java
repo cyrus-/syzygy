@@ -2,8 +2,12 @@ package edu.cmu.cs.syzygy;
 
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CharacterLiteral;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.StringLiteral;
+
 
 public class TrainingVisitor extends ASTVisitor {
 	public TrainingData data;
@@ -38,6 +42,24 @@ public class TrainingVisitor extends ASTVisitor {
 		data.literals.add(Util.findContext(chr), chr.resolveTypeBinding().getQualifiedName());
 		return false;
 	}
+	
+
+	public boolean visit(MethodInvocation mi)
+	{
+		ITypeBinding bind = mi.resolveTypeBinding();
+		if(bind == null)
+			return true;
+		
+		IMethodBinding meth = mi.resolveMethodBinding();
+		
+		if(meth == null)
+			return true;
+		
+		
+		data.methods.add(Util.findContext(mi), bind.getQualifiedName(), meth);
+		return true;
+	}
+	
 	
 	public TrainingVisitor() {
 		data = new TrainingData();

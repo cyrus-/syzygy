@@ -1,4 +1,4 @@
-package main;
+package edu.cmu.cs.syzygy.planet;
 
 public class Main {
 
