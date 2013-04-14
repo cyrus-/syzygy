@@ -42,32 +42,32 @@ public class Predictor {
 		else throw new RuntimeException("Invalid AST node type!");
 	}
 	
-	public double predict(Expression e) {
-		     if (e instanceof Annotation) return predict((Annotation)e);
-		else if (e instanceof ArrayAccess) return predict((ArrayAccess)e);
-		else if (e instanceof ArrayCreation) return predict((ArrayCreation)e);
-		else if (e instanceof Assignment) return predict((Assignment)e);
-		else if (e instanceof BooleanLiteral) return predict((BooleanLiteral)e);
-		else if (e instanceof CastExpression) return predict((CastExpression)e);
-		else if (e instanceof CharacterLiteral) return predict((CharacterLiteral)e);
-		else if (e instanceof ClassInstanceCreation) return predict((ClassInstanceCreation)e);
-		else if (e instanceof ConditionalExpression) return predict((ConditionalExpression)e);
-		else if (e instanceof FieldAccess) return predict((FieldAccess)e);
-		else if (e instanceof InfixExpression) return predict((InfixExpression)e);
-		else if (e instanceof MethodInvocation) return predict((MethodInvocation)e);
-		else if (e instanceof QualifiedName) return predict((QualifiedName)e);
-		else if (e instanceof SimpleName) return predict((SimpleName)e);
-		else if (e instanceof NullLiteral) return predict((NullLiteral)e);
-		else if (e instanceof NumberLiteral) return predict((NumberLiteral)e);
-		else if (e instanceof ParenthesizedExpression) return predict((ParenthesizedExpression)e);
-		else if (e instanceof PostfixExpression) return predict((PostfixExpression)e);
-		else if (e instanceof PrefixExpression) return predict((PrefixExpression)e);
-		else if (e instanceof StringLiteral) return predict((StringLiteral)e);
-		else if (e instanceof SuperFieldAccess) return predict((SuperFieldAccess)e);
-		else if (e instanceof SuperMethodInvocation) return predict((SuperMethodInvocation)e);
-		else if (e instanceof ThisExpression) return predict((ThisExpression)e);
-		else if (e instanceof TypeLiteral) return predict((TypeLiteral)e);
-		else if (e instanceof VariableDeclarationExpression) return predict((VariableDeclarationExpression)e);
+	public double predict(Expression e, SyntacticContext c, String t) {
+		     if (e instanceof Annotation) return predict((Annotation)e, c, t);
+		else if (e instanceof ArrayAccess) return predict((ArrayAccess)e, c, t);
+		else if (e instanceof ArrayCreation) return predict((ArrayCreation)e, c, t);
+		else if (e instanceof Assignment) return predict((Assignment)e, c, t);
+		else if (e instanceof BooleanLiteral) return predict((BooleanLiteral)e, c, t);
+		else if (e instanceof CastExpression) return predict((CastExpression)e, c, t);
+		else if (e instanceof CharacterLiteral) return predict((CharacterLiteral)e, c, t);
+		else if (e instanceof ClassInstanceCreation) return predict((ClassInstanceCreation)e, c, t);
+		else if (e instanceof ConditionalExpression) return predict((ConditionalExpression)e, c, t);
+		else if (e instanceof FieldAccess) return predict((FieldAccess)e, c, t);
+		else if (e instanceof InfixExpression) return predict((InfixExpression)e, c, t);
+		else if (e instanceof MethodInvocation) return predict((MethodInvocation)e, c, t);
+		else if (e instanceof QualifiedName) return predict((QualifiedName)e, c, t);
+		else if (e instanceof SimpleName) return predict((SimpleName)e, c, t);
+		else if (e instanceof NullLiteral) return predict((NullLiteral)e, c, t);
+		else if (e instanceof NumberLiteral) return predict((NumberLiteral)e, c, t);
+		else if (e instanceof ParenthesizedExpression) return predict((ParenthesizedExpression)e, c, t);
+		else if (e instanceof PostfixExpression) return predict((PostfixExpression)e, c, t);
+		else if (e instanceof PrefixExpression) return predict((PrefixExpression)e, c, t);
+		else if (e instanceof StringLiteral) return predict((StringLiteral)e, c, t);
+		else if (e instanceof SuperFieldAccess) return predict((SuperFieldAccess)e, c, t);
+		else if (e instanceof SuperMethodInvocation) return predict((SuperMethodInvocation)e, c, t);
+		else if (e instanceof ThisExpression) return predict((ThisExpression)e, c, t);
+		else if (e instanceof TypeLiteral) return predict((TypeLiteral)e, c, t);
+		else if (e instanceof VariableDeclarationExpression) return predict((VariableDeclarationExpression)e, c, t);
 		else throw new RuntimeException("Invalid expression type!");
 	}
 	
@@ -149,121 +149,96 @@ public class Predictor {
     	
     	return formProb + data.charData.lnProb(s.getEscapedValue());
 	}
-	
-/*
-public double predict(StringLiteral s, SyntacticContext ctx, String type) {
-	
-}
-public double predict(StringLiteral s, SyntacticContext ctx, String type) {
-	
-}
-public double predict(StringLiteral s, SyntacticContext ctx, String type) {
-	
-}
-public double predict(StringLiteral s, SyntacticContext ctx, String type) {
-	
-}
-*/
 
-	private String getExpectedType(NumberLiteral x) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private SyntacticContext getContext(NumberLiteral x) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public double predict(Annotation a) {
+    public double predict(Annotation a, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("Annotation not implemented.");
 	}
 	
-	public double predict(ArrayAccess e) {
+	public double predict(ArrayAccess e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("ArrayAccess not implemented.");
 	}
 	
-	public double predict(ArrayCreation e) {
+	public double predict(ArrayCreation e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("ArrayCreation not implemented.");
 	}
 	
-	public double predict(ArrayInitializer e) {
+	public double predict(ArrayInitializer e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("ArrayInitializer not implemented.");
 	}
 	
-	public double predict(Assignment e) {
+	public double predict(Assignment e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("Assignment not implemented.");
 	}
 	
-	public double predict(CastExpression e) {
+	public double predict(CastExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("CastExpression not implemented.");
 	}
 	
-	public double predict(ClassInstanceCreation e) {
+	public double predict(ClassInstanceCreation e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("ClassInstanceCreation not implemented.");
 	}
 	
-	public double predict(ConditionalExpression e) {
+	public double predict(ConditionalExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("ConditionalExpression not implemented.");
 	}
 	
-	public double predict(FieldAccess e) {
+	public double predict(FieldAccess e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("FieldAccess not implemented.");
 	}
 	
-	public double predict(InfixExpression e) {
+	public double predict(InfixExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("InfixExpression not implemented.");
 	}
 	
-	public double predict(InstanceofExpression e) {
+	public double predict(InstanceofExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("InstanceofExpression not implemented.");
 	}
 	
-	public double predict(MethodInvocation e) {
+	public double predict(MethodInvocation e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("MethodInvocation not implemented.");
 	}
 	
-	public double predict(QualifiedName e) {
+	public double predict(QualifiedName e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("QualifiedName not implemented.");
 	}
 	
-	public double predict(SimpleName e) {
+	public double predict(SimpleName e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("SimpleName not implemented.");
 	}
 	
-	public double predict(NullLiteral e) {
+	public double predict(NullLiteral e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("NullLiteral not implemented.");
 	}
 	
-	public double predict(ParenthesizedExpression e) {
+	public double predict(ParenthesizedExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("ParenthesizedExpression not implemented.");
 	}
 	
-	public double predict(PostfixExpression e) {
+	public double predict(PostfixExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("PostfixExpression not implemented.");
 	}
 	
-	public double predict(PrefixExpression e) {
+	public double predict(PrefixExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("PrefixExpression not implemented.");
 	}
 	
-	public double predict(SuperFieldAccess e) {
+	public double predict(SuperFieldAccess e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("SuperFieldAccess not implemented.");
 	}
 	
-	public double predict(SuperMethodInvocation e) {
+	public double predict(SuperMethodInvocation e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("SuperMethodInvocation not implemented.");
 	}
 	
-	public double predict(ThisExpression e) {
+	public double predict(ThisExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("ThisExpression not implemented.");
 	}
 	
-	public double predict(TypeLiteral e) {
+	public double predict(TypeLiteral e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("TypeLiteral not implemented.");
 	}
 	
-	public double predict(VariableDeclarationExpression e) {
+	public double predict(VariableDeclarationExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("VariableDeclarationExpression not implemented.");
 	}
 }
