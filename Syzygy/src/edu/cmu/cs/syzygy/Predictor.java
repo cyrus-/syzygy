@@ -19,7 +19,6 @@ import org.eclipse.jdt.core.dom.InstanceofExpression;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NullLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
-import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -59,7 +58,6 @@ public class Predictor {
 		else if (e instanceof SimpleName) return predict((SimpleName)e, c, t);
 		else if (e instanceof NullLiteral) return predict((NullLiteral)e, c, t);
 		else if (e instanceof NumberLiteral) return predict((NumberLiteral)e, c, t);
-		else if (e instanceof ParenthesizedExpression) return predict((ParenthesizedExpression)e, c, t);
 		else if (e instanceof PostfixExpression) return predict((PostfixExpression)e, c, t);
 		else if (e instanceof PrefixExpression) return predict((PrefixExpression)e, c, t);
 		else if (e instanceof StringLiteral) return predict((StringLiteral)e, c, t);
@@ -208,10 +206,6 @@ public class Predictor {
 	
 	public double predict(NullLiteral e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("NullLiteral not implemented.");
-	}
-	
-	public double predict(ParenthesizedExpression e, SyntacticContext ctx, String type) {
-		throw new NotImplementedException("ParenthesizedExpression not implemented.");
 	}
 	
 	public double predict(PostfixExpression e, SyntacticContext ctx, String type) {
