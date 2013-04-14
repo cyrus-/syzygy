@@ -1,6 +1,7 @@
 package edu.cmu.cs.syzygy;
 
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.CharacterLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.StringLiteral;
 
@@ -16,7 +17,10 @@ public class TrainingVisitor extends ASTVisitor {
 		} else if(Util.isFloat(lit) || Util.isDouble(lit)) {
 			data.floatingData.increment(lit.getToken());
 		}
-		// Must add to table
+		
+		String type = lit.resolveTypeBinding().getQualifiedName();
+		
+		data.literals.add(Util.findContext(lit), type);
 		
 		return false;
 	}
@@ -24,6 +28,14 @@ public class TrainingVisitor extends ASTVisitor {
 	public boolean visit(StringLiteral str)
 	{
 		data.stringData.increment(str.getLiteralValue());
+		data.literals.add(Util.findContext(str), str.resolveTypeBinding().getQualifiedName());
+		return false;
+	}
+	
+	public boolean visit(CharacterLiteral chr)
+	{
+		data.charData.increment(Character.toString(chr.charValue()));
+		data.literals.add(Util.findContext(chr), chr.resolveTypeBinding().getQualifiedName());
 		return false;
 	}
 	

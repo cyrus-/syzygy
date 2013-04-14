@@ -51,6 +51,7 @@ public class RunTests implements Runnable {
 		File[] files = dir.listFiles();
 		
 		for (File child : files) {
+			
 			if (!child.isDirectory()) {
 				continue;
 			}
@@ -62,6 +63,7 @@ public class RunTests implements Runnable {
 		for (File child : files) {
 			if (child.isFile() && child.getName().toLowerCase().endsWith(".java")) {
 				ls.add(child);
+				System.out.println("file is " + child);
 			}
 		}
 	}
@@ -308,7 +310,9 @@ public class RunTests implements Runnable {
 	{
 		TrainingVisitor vit = new TrainingVisitor();
 		
+		System.out.println("here " + ls);
 		for(File file : ls) {
+			System.out.println("doing file " + file);
 			JavaFile jfile = new JavaFile(file, jproj);
 			jfile.accept(vit);
 		}
@@ -320,9 +324,9 @@ public class RunTests implements Runnable {
 		IJavaProject jproj = JavaCore.create(proj);
 		LinkedList<File> allFiles = new LinkedList<File>();
 		PROJECT_DIR = proj.getLocation().toFile();
-		double acc;
 		
 		getAllFiles(PROJECT_DIR, allFiles);
+		System.out.println(allFiles);
 		trainFiles(jproj, allFiles);
 		return;
 		

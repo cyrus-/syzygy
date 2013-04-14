@@ -49,7 +49,6 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 
 	public void run(IAction action)
 	{
-		
 		ExecutorService es = Executors.newFixedThreadPool(4);
 		
 		for (int i = 0; i < projects.length; i++) {
