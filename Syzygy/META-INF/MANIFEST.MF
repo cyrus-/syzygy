@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: CodeWalker
+Bundle-Name: Syzygy
 Bundle-SymbolicName: Syzygy;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-ClassPath: CodeWalker.jar,
+Bundle-ClassPath: Syzygy.jar,
  plugins/org.eclipse.jdt.core_3.8.2.v20120814-155456.jar,
  plugins/org.eclipse.core.runtime_3.8.0.v20120521-2346.jar,
  plugins/org.eclipse.equinox.common_3.6.100.v20120522-1841.jar,
@@ -335,11 +335,11 @@ Bundle-ClassPath: CodeWalker.jar,
  plugins/org.eclipse.update.configurator.source_3.3.200.v20120523-1752.jar,
  lib/lingpipe-4.1.0.jar
 Export-Package: .,
- codewalker.actions,
+ edu.cmu.cs.syzygy.test,
  dir,
  visit
 Bundle-ActivationPolicy: lazy
-Bundle-Activator: walker.Activator
+Bundle-Activator: edu.cmu.cs.syzygy.activator.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.resources;bundle-version="3.8.1",
  org.eclipse.jdt;bundle-version="3.8.0",

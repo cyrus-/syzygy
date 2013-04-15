@@ -4,8 +4,8 @@
    <extension
          point="org.eclipse.ui.actionSets">
       <actionSet
-            id="CodeWalker.actionSet"
-            label="Walker Action Set"
+            id="Syzygy.actionSet"
+            label="Syzygy Action Set"
             visible="true">
          <menu
                id="sampleMenu"
@@ -15,9 +15,9 @@
             </separator>
          </menu>
          <action
-               class="codewalker.actions.SampleAction"
+               class="edu.cmu.cs.syzygy.test.EclipseAction"
                icon="icons/sample.gif"
-               id="codewalker.actions.SampleAction"
+               id="edu.cmu.cs.syzygy.test.EclipseAction"
                label="&amp;Run"
                menubarPath="sampleMenu/sampleGroup"
                toolbarPath="sampleGroup"
