@@ -12,8 +12,6 @@ import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
-import visit.Context.ContextType;
-
 public class Util {
 	
 	public static String normalizeNumberLiteral(NumberLiteral x, String type) {
