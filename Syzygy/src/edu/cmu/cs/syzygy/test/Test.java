@@ -1,14 +1,6 @@
 package edu.cmu.cs.syzygy.test;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -17,30 +9,15 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 
-import visit.LiteralVisitor;
-import visit.MethodVisitor;
-import visit.Predictor;
-import visit.VariableVisitor;
-import dir.JavaFile;
+import edu.cmu.cs.syzygy.TrainingData;
 import edu.cmu.cs.syzygy.TrainingVisitor;
 
 public class Test implements Runnable {
-	private LiteralVisitor lit = null;
-	private VariableVisitor var = null;
-	private MethodVisitor methods = null;
 	private Random generator = new Random();
-	private int RATIO = 10;
-	private int ITERATIONS = 10;
-	private boolean SHOW_TRAINING = false;
-	private File PROJECT_DIR = null;
+	private String project = null;
 	
-	
-	private String project = "";
-	private String[] otherprojects = null;
-	
-	public Test (String p, String[] o) {
-		project = p;
-		otherprojects = o;
+	public Test (String project_name) {
+		project = project_name;
 	}
 
 	private static void getAllFiles(File dir, LinkedList<File> ls)
@@ -63,36 +40,21 @@ public class Test implements Runnable {
 		}
 	}
 	
-	private void initData()
+	private TrainingData trainWithList(IJavaProject prj, LinkedList<File> ls)
 	{
-		lit = new LiteralVisitor();
-		var = new VariableVisitor();
-		methods = new MethodVisitor();
-	}
-	
-	private void trainWithList(IJavaProject prj, LinkedList<File> ls)
-	{
-		initData();
+		TrainingVisitor vis = new TrainingVisitor();
+		
 		for(File file : ls) {
-			if(SHOW_TRAINING)
-				System.out.println("Training on " + file.getName());
 			JavaFile jfile = new JavaFile(file, prj);
-			jfile.accept(lit);
-			jfile.accept(methods);
-			jfile.accept(var);
+			jfile.accept(vis);
 		}
+		
+		return vis.getData();
 	}
 	
-	private LinkedList<File> pick10percFiles(LinkedList<File> ls, int howmany)
+	private LinkedList<File> pickFiles(LinkedList<File> ls, int howmany)
 	{
 		LinkedList<File> ret = new LinkedList<File>();
-		
-		/*
-		for(int i = 0; i < howmany; ++i) {
-			int index = 0;
-			ret.add(ls.get(index));
-			ls.remove(index);
-		}*/
 		
 		for(int i = 0; i < howmany; ++i) {
 			int size = ls.size();
@@ -104,78 +66,33 @@ public class Test implements Runnable {
 		return ret;
 	}
 	
-	private double trainLeave10percOut(IJavaProject prj, LinkedList<File> ls, BufferedWriter statsFile) throws IOException
+	private ResultTable trainLeaveFractionOut(IJavaProject prj, LinkedList<File> ls, double frac, final int numIterations)
 	{
 		final int size = ls.size();
-		double total = 0.0;
-		double nonzerototal = 0.0;
-		double cheat = 0;
-		int tenperc = max(1, size / RATIO);
+		final int numTestFiles = max(1, (int)(size * frac));
+		ResultTable results = new ResultTable();
 		
-		for(int i = 0; i < ITERATIONS; ++i) {
-			LinkedList<File> outls = pick10percFiles(ls, tenperc);
-			System.out.println("=========== ITERATION " + project + i + " ===========");
+		System.out.println("Total files " + ls.size());
+		
+		for(int i = 0; i < numIterations; ++i) {
+			LinkedList<File> outls = pickFiles(ls, numTestFiles);
+			System.out.println("=========== ITERATION " + project + " " + i + " ===========");
 			
-			trainWithList(prj, ls);
+			TrainingData data = trainWithList(prj, ls);
+			TestVisitor visitor = new TestVisitor(data);
 			
-			//print();
-			
-			FileWriter output_file = null;
-			BufferedWriter output_file_buffer = null;
-			
-			output_file = new FileWriter(project + ".tokens" + i);
-			//output_file = new FileWriter("/dev/null");
-			output_file_buffer = new BufferedWriter(output_file);
-			
-			FileWriter output_file2 = null;
-			BufferedWriter output_file_buffer2 = null;
-			
-			output_file2 = new FileWriter(project + ".stats" + i);
-			//output_file2 = new FileWriter("/dev/null");
-			output_file_buffer2 = new BufferedWriter(output_file2);
-			
-			output_file_buffer.write("" + tenperc);
-			output_file_buffer.newLine();
 			for(File test : outls) {
-				output_file_buffer.write(test.getAbsolutePath().substring(PROJECT_DIR.getAbsolutePath().length()).substring(1) );
-				output_file_buffer.newLine();
-			}
-			output_file_buffer.flush();
-			
-			Predictor pred = new Predictor(lit, var, methods, output_file_buffer, output_file_buffer2);
-			
-			double thistotal = 0.0;
-			double thisnonzerototal = 0.0;
-			double thischeat = 0;
-			
-			//System.out.println("======> Need to test with " + outls.size() + " files");
-			int file_cur = 0;
-			for(File test : outls) {
-				file_cur++;
-				
-				double thisfile = pred.test(new JavaFile(test, prj), test);
-				thistotal += thisfile;
-				thisnonzerototal += pred.get_nonzero_test();
-				thischeat += pred.get_nonzerototal_test();
-
-				//System.out.println("==> " + file_cur + "/" + outls.size() + " " + test.getName() + " got " + thisfile);
+				System.out.println("Testing on " + test);
+				JavaFile testFile = new JavaFile(test, prj);
+				testFile.accept(visitor);
 			}
 			
-			output_file_buffer.close();
-			
-			total += thistotal / (double)outls.size();
-			nonzerototal += thisnonzerototal / (double)outls.size();
-			cheat += thischeat/ (double)outls.size();
-			
+			// put files back
 			ls.addAll(outls);
-			
-			assert(ls.size() == size);
+			results.merge(visitor.getResults());
 		}
 		
-		statsFile.write("====> Non Zero Success Rate: " + nonzerototal / (double)ITERATIONS); statsFile.newLine();
-		statsFile.write("====> Cheat Success Rate: " + cheat / (double)ITERATIONS); statsFile.newLine();
-		
-		return total / (double)ITERATIONS;
+		return results;
 	}
 	
 	private static int max(int i, int j) {
@@ -184,160 +101,23 @@ public class Test implements Runnable {
 		else
 			return j;
 	}
-
-	public void serialize(String fileName)
+	
+	public void run()
 	{
-		try {
-			FileOutputStream fout = new FileOutputStream(fileName);
-			
-			ObjectOutputStream out = new ObjectOutputStream(fout);
-			
-			out.writeObject(methods);
-			out.writeObject(lit);
-			out.writeObject(var);
-			
-			out.close();
-			fout.close();
-			
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public void deserialize(String fileName)
-	{
-		try {
-			FileInputStream fis = new FileInputStream(fileName);
-			ObjectInputStream in = new ObjectInputStream(fis);
-			
-			methods = (MethodVisitor)in.readObject();
-			lit = (LiteralVisitor)in.readObject();
-			var = (VariableVisitor)in.readObject();
-			
-			in.close();
-			fis.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	
-	public void print()
-	{
-		var.print();
-		lit.print();
-		methods.print();
-	}
-	
-	
-	
-	
-	public void crossProject(IJavaProject prj, LinkedList<File> ls) throws IOException {
-		trainWithList(prj, ls);
-		
-		FileWriter output_file = null;
-		BufferedWriter output_file_buffer = null;
-		
-		 
-		output_file = new FileWriter("/dev/null");
-		output_file_buffer = new BufferedWriter(output_file);
-		
-		FileWriter output_file2 = null;
-		BufferedWriter output_file_buffer2 = null;
-		
-		
-		output_file2 = new FileWriter(project + ".cross");
-		output_file_buffer2 = new BufferedWriter(output_file2);
-		
-		
-		Predictor pred = new Predictor(lit, var, methods, output_file_buffer, output_file_buffer2);
-		
-		for (String otherproj : otherprojects) {
-			
-			System.out.println(project + "-" + otherproj);
-			
-			BufferedWriter statsFile = new BufferedWriter(new FileWriter(project + "-" + otherproj));
-			
-            IProject proj = ResourcesPlugin.getWorkspace().getRoot().getProject(otherproj);
-		
-            IJavaProject jproj = JavaCore.create(proj);
-            LinkedList<File> allFiles = new LinkedList<File>();
-
-            getAllFiles(proj.getLocation().toFile(), allFiles);
-
-
-            double thistotal = 0.0;
-            double thisnonzerototal = 0.0;
-            double thischeat = 0;
-
-            //System.out.println("======> Need to test with " + ls.size() + " files");
-            //int file_cur = 0;
-            for(File test : allFiles) {
-            	//file_cur++;
-
-            	double thisfile = pred.test(new JavaFile(test, jproj), test);
-            	thistotal += thisfile;
-            	thisnonzerototal += pred.get_nonzero_test();
-            	thischeat += pred.get_nonzerototal_test();
-
-            	//System.out.println("==> " + file_cur + "/" + allFiles.size() + " " + test.getName() + " got " + thisfile);
-            }
-
-            thistotal = thistotal / (double)allFiles.size();
-            thisnonzerototal = thisnonzerototal / (double)allFiles.size();
-            thischeat = thischeat / (double)allFiles.size();
-
-            statsFile.write("====> Non Zero Success Rate: " + thisnonzerototal); statsFile.newLine();
-            statsFile.write("====> Cheat Success Rate: " + thischeat); statsFile.newLine();
-            statsFile.write("====> Success rate " + thistotal); statsFile.newLine();
-            statsFile.flush();
-            statsFile.close();
-		}
-	}
-	
-	private void trainFiles(IJavaProject jproj, LinkedList<File> ls)
-	{
-		TrainingVisitor vit = new TrainingVisitor();
-		
-		for(File file : ls) {
-			JavaFile jfile = new JavaFile(file, jproj);
-			jfile.accept(vit);
-		}
-	}
-	
-	public void run(){
+		final long start = System.currentTimeMillis();
 		IProject proj = ResourcesPlugin.getWorkspace().getRoot().getProject(project);
 		
 		IJavaProject jproj = JavaCore.create(proj);
 		LinkedList<File> allFiles = new LinkedList<File>();
-		PROJECT_DIR = proj.getLocation().toFile();
-		double acc;
+		File dir = proj.getLocation().toFile();
 		
-		getAllFiles(PROJECT_DIR, allFiles);
-		trainFiles(jproj, allFiles);
-		return;
+		getAllFiles(dir, allFiles);
+		trainWithList(jproj, allFiles);
+		ResultTable results = trainLeaveFractionOut(jproj, allFiles, 0.1, 10);
 		
-		/*
-		try {
-			BufferedWriter statsFile = new BufferedWriter (new FileWriter(project + ".stats"));
-			acc = trainLeave10percOut(jproj, allFiles, statsFile);
-			
-			statsFile.write("====> Success rate " + acc); statsFile.newLine();
-			//statsFile.write("Total Predictions: " + Tracer.numPredTotal); statsFile.newLine();
-			//statsFile.write("0.0 Predictions: " + Tracer.numPredZero); statsFile.newLine();
-			//statsFile.write("Positive Predictions in Methods: " + Tracer.numMethodsPositive); statsFile.newLine();
-			//statsFile.write("Negative Predictions in Methods: " + Tracer.numMethodsMinus1); statsFile.newLine();
-			
-			crossProject(jproj, allFiles);
-			
-		} catch (IOException e) {
-			System.err.println("Failed to collect statistics: " + e.getMessage());
-		}*/
+		System.out.println("Accuracy rate: " + results.getAverage());
+		final long end = System.currentTimeMillis();
+		final long totalTime = end - start;
+		System.out.println("=========== EXECUTION TIME: " + totalTime + " milliseconds =============");
 	}
 }

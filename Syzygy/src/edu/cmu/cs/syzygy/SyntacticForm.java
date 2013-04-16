@@ -1,5 +1,5 @@
 package edu.cmu.cs.syzygy;
 
-enum SyntacticForm {
+public enum SyntacticForm {
 	LIT, VAR, METHOD;
 }

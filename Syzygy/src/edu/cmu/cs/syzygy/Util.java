@@ -2,10 +2,15 @@ package edu.cmu.cs.syzygy;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.BooleanLiteral;
+import org.eclipse.jdt.core.dom.CharacterLiteral;
 import org.eclipse.jdt.core.dom.ConditionalExpression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.StringLiteral;
+import org.eclipse.jdt.core.dom.VariableDeclaration;
+
 import java.util.Hashtable;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
@@ -16,7 +21,12 @@ public class Util {
 	
 	public static String normalizeNumberLiteral(NumberLiteral x, String type) {
 		if (type.equals("int")) {
-			return Integer.toString(Integer.parseInt(x.getToken()));
+			// XXX: this fails when integer is for example 0x23
+			try {
+				return Integer.toString(Integer.parseInt(x.getToken()));
+			} catch(NumberFormatException e) {
+				return x.getToken();
+			}
 		} else if (type.equals("short")) {
 			return Short.toString(Short.parseShort(x.getToken()));
 		} else if (type.equals("long")) {
@@ -64,6 +74,21 @@ public class Util {
 		} else {
 			return SyntacticContext.OTHER;
 		}
+	}
+	
+	public static SyntacticForm findForm(ASTNode node)
+	{
+		if(node instanceof NumberLiteral || node instanceof CharacterLiteral ||
+				node instanceof StringLiteral || node instanceof BooleanLiteral)
+		{
+			return SyntacticForm.LIT;
+		}
+		else if(node instanceof MethodInvocation) {
+			return SyntacticForm.METHOD;
+		} else if(node instanceof VariableDeclaration) {
+			return SyntacticForm.VAR;
+		}
+		return null;
 	}
 
 	public static <T> void htInc (Hashtable<T, Integer> ht, T t) {
