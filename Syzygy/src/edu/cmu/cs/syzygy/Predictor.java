@@ -19,6 +19,7 @@ import org.eclipse.jdt.core.dom.InstanceofExpression;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NullLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
+import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -58,13 +59,14 @@ public class Predictor {
 		else if (e instanceof SimpleName) return predict((SimpleName)e, c, t);
 		else if (e instanceof NullLiteral) return predict((NullLiteral)e, c, t);
 		else if (e instanceof NumberLiteral) return predict((NumberLiteral)e, c, t);
+		else if (e instanceof ParenthesizedExpression) return predict(((ParenthesizedExpression)e).getExpression(), c, t);
 		else if (e instanceof PostfixExpression) return predict((PostfixExpression)e, c, t);
 		else if (e instanceof PrefixExpression) return predict((PrefixExpression)e, c, t);
 		else if (e instanceof StringLiteral) return predict((StringLiteral)e, c, t);
 		else if (e instanceof SuperFieldAccess) return predict((SuperFieldAccess)e, c, t);
 		else if (e instanceof SuperMethodInvocation) return predict((SuperMethodInvocation)e, c, t);
 		else if (e instanceof ThisExpression) return predict((ThisExpression)e, c, t);
-		else if (e instanceof TypeLiteral) return predict((TypeLiteral)e, c, t);
+		else if (e instanceof TypeLiteral) return predict((TypeLiteral)e, c, t); //Make this a snew syntactic form.
 		else if (e instanceof VariableDeclarationExpression) return predict((VariableDeclarationExpression)e, c, t);
 		else throw new RuntimeException("Invalid expression type!");
 	}
@@ -100,11 +102,11 @@ public class Predictor {
 		
 		switch (form) {
 		case LIT:
-			return numLit / total;
+			return Math.log(numLit / total);
 		case METHOD:
-			return numMethods / total;
+			return Math.log(numMethods / total);
 		case VAR:
-			return numVar / total;
+			return Math.log(numVar / total);
 	    default:
 	    	throw new RuntimeException("form switching didn't work.. blah");
 		}
@@ -138,7 +140,7 @@ public class Predictor {
 	
 	public double predict(BooleanLiteral b, SyntacticContext ctx, String type) throws InvalidDataException {
 		// TRUE = FALSE ???
-		return (calculateFormProb(SyntacticForm.LIT, ctx, type) + 0.5);
+		return (calculateFormProb(SyntacticForm.LIT, ctx, type) + Math.log(0.5));
 	}
 
 	
