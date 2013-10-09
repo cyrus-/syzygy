@@ -3,6 +3,7 @@ package edu.cmu.cs.syzygy;
 public enum SyntacticContext {
 	DECL,
 	STMT,
-	CALL,
+	METHOD_TARGET,
+	METHOD_ARGUMENT,
 	OTHER
 }

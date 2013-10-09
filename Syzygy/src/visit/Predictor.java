@@ -17,7 +17,7 @@ import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StringLiteral;
 
-import dir.JavaFile;
+import edu.cmu.cs.syzygy.test.JavaFile;
 
 public class Predictor extends BaseVisitor {
 	private LiteralVisitor lit;

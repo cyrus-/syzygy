@@ -1,4 +1,4 @@
-package walker;
+package edu.cmu.cs.syzygy.activator;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;

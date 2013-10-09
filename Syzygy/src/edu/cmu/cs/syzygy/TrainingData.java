@@ -11,46 +11,48 @@ public class TrainingData {
 	public NGram stringData = new NGram(2);
 	public NGram charData = new NGram(2);
 
-	public Table<SyntacticContext, String> literals = new Table<SyntacticContext, String>(); 
+	public Table<SyntacticContext, String> literals = new Table<SyntacticContext, String>();
 	public Table<SyntacticContext, String> variables = new Table<SyntacticContext, String>();
 	public FrequencyTable<IMethodBinding> methods = new FrequencyTable<IMethodBinding>();
+	public FrequencyTable<String> enumLiterals = new FrequencyTable<String>();
+	// enumLiterals and literals must be kept in sync
 	
 	public TrainingData() {
 	}
 	
-	public int getLiteralCount(SyntacticContext ctx, String type) {
+	public int getLiteralFreq(SyntacticContext ctx, String type) {
 		return literals.getCount(ctx, type);
 	}
 
-	public int getVariableCount(SyntacticContext ctx, String type) {
+	public int getVariableFreq(SyntacticContext ctx, String type) {
 		return variables.getCount(ctx,  type);
 	}
 	
-	public int getMethodCount(SyntacticContext ctx, String type) {
-		return methods.getCount(ctx, type);
+	public int getMethodFreq(SyntacticContext ctx, String type) {
+		return methods.getFreq(ctx, type);
 	}
 	
-	public int getLiteralCount(SyntacticContext ctx) {
+	public int getLiteralFreq(SyntacticContext ctx) {
 		return literals.getCount1(ctx);
 	}
 
-	public int getVariableCount(SyntacticContext ctx) {
+	public int getVariableFreq(SyntacticContext ctx) {
 		return variables.getCount1(ctx);
 	}
 	
-	public int getMethodCount(SyntacticContext ctx) {
-		return methods.getCount(ctx);
+	public int getMethodFreq(SyntacticContext ctx) {
+		return methods.getFreq(ctx);
 	}
 
-	public int getLiteralCount() {
+	public int getLiteralFreq() {
 		return literals.getTotal();
 	}
 
-	public int getVariableCount() {
+	public int getVariableFreq() {
 		return variables.getTotal();
 	}
 
-	public int getMethodCount() {
+	public int getMethodFreq() {
 		return methods.getTotal();
 	}
 }

@@ -11,23 +11,24 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 public class EclipseAction implements IWorkbenchWindowActionDelegate {
 	private static final String[] projects = {"planet"};
 	
-	private String[] rest (int i) {
-		String[] result = new String[projects.length - 1];
-		for (int j = 0; j < projects.length; j++) {
-			if (i == j) continue;
-			result[i] = projects[i];
-		}
-		return result;
-	}
-	
-
 	public void run(IAction action)
 	{
-		
+		runSequential();
+	}
+	
+	private void runSequential()
+	{
+		for(String project : projects) {
+			(new Test(project)).run();
+		}	
+	}
+	
+	private void runParallel()
+	{
 		ExecutorService es = Executors.newFixedThreadPool(4);
 		
-		for (int i = 0; i < projects.length; i++) {
-			es.submit(new Test(projects[i], rest(i)));
+		for(String project : projects) {
+			es.submit(new Test(project));
 		}
 		
 		es.shutdown();

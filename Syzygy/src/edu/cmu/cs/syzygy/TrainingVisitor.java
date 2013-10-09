@@ -60,6 +60,11 @@ public class TrainingVisitor extends ASTVisitor {
 		return true;
 	}
 	
+	public TrainingData getData()
+	{
+		return data;
+	}
+	
 	public TrainingVisitor() {
 		data = new TrainingData();
 	}

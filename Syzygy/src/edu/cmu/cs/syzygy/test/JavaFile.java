@@ -1,4 +1,4 @@
-package dir;
+package edu.cmu.cs.syzygy.test;
 
 import java.io.File;
 import java.io.FileReader;
@@ -8,6 +8,8 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+
+import dir.BaseNode;
 
 public class JavaFile extends BaseNode {
 
