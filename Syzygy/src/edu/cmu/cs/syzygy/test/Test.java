@@ -8,7 +8,9 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 
+import edu.cmu.cs.syzygy.Trainer;
 import edu.cmu.cs.syzygy.TrainingData;
 import edu.cmu.cs.syzygy.TrainingVisitor;
 
@@ -42,14 +44,16 @@ public class Test implements Runnable {
 	
 	private TrainingData trainWithList(IJavaProject prj, LinkedList<File> ls)
 	{
-		TrainingVisitor vis = new TrainingVisitor();
+		CompilationUnit[] units = new CompilationUnit[ls.size()];
+		int i = 0;
 		
 		for(File file : ls) {
 			JavaFile jfile = new JavaFile(file, prj);
-			jfile.accept(vis);
+			units[i] = jfile.getUnit();
+			++i;
 		}
 		
-		return vis.getData();
+		return new Trainer(units).train();
 	}
 	
 	private LinkedList<File> pickFiles(LinkedList<File> ls, int howmany)

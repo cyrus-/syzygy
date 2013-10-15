@@ -369,4 +369,5 @@ Import-Package: com.aliasi.chunk;resolution:=optional,
  com.aliasi.tag;resolution:=optional,
  com.aliasi.tokenizer;resolution:=optional,
  com.aliasi.util;resolution:=optional,
- com.aliasi.xml;resolution:=optional
+ com.aliasi.xml;resolution:=optional,
+ org.eclipse.jdt.internal.corext.dom

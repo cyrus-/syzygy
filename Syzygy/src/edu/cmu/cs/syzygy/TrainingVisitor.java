@@ -10,7 +10,7 @@ import org.eclipse.jdt.core.dom.StringLiteral;
 
 
 public class TrainingVisitor extends ASTVisitor {
-	public TrainingData data;
+	public TrainingData data = null;
 	
 	public boolean visit(NumberLiteral lit)
 	{
