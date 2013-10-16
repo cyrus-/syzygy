@@ -5,6 +5,7 @@ import java.util.List;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AssertStatement;
 import org.eclipse.jdt.core.dom.BreakStatement;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConstructorInvocation;
 import org.eclipse.jdt.core.dom.ContinueStatement;
 import org.eclipse.jdt.core.dom.DoStatement;
@@ -57,6 +58,7 @@ import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.TypeDeclarationStatement;
 import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
 
@@ -64,11 +66,15 @@ import visit.LiteralVisitor;
 
 public class Predictor {
 	private TrainingData data;
+	private CompilationUnit unit = null;
 
 	public Predictor(TrainingData data) {
 		this.data = data;
 	}
 	
+	public void setUnit(CompilationUnit u) {
+		unit = u;
+	}
 	
 	public double predict(ASTNode n) {
 		if (n instanceof Expression) return predict((Expression)n);
@@ -137,7 +143,7 @@ public class Predictor {
 		else if (e instanceof VariableDeclarationExpression) return prob((VariableDeclarationExpression)e, ctx, type);
 		else throw new RuntimeException("Invalid expression form!");
 	}
-	
+
 	public double formProb(SyntacticForm form, SyntacticContext ctx, String type) {
 		int numLit = data.getLiteralFreq(ctx, type);
 		int numVar = data.getVariableFreq(ctx, type);
@@ -174,13 +180,11 @@ public class Predictor {
 	    	throw new RuntimeException("form switching didn't work.. blah");
 		}
 	}
-	
-	
+
 	private boolean isInt(String type) {
 		return (type.equals("int") || type.equals("short") || type.equals("long") 
 				|| type.equals("byte"));
 	}
-
 	
 	/* different predict methods for different subtypes of AST Node 
 	 * public double predict();
@@ -206,7 +210,6 @@ public class Predictor {
 		return (formProb(SyntacticForm.LIT, ctx, type) + Math.log(0.5));
 	}
 
-	
     public double prob(CharacterLiteral s, SyntacticContext ctx, String type) throws InvalidDataException {
     	double formProb = formProb(SyntacticForm.LIT, ctx, type);
     	
@@ -249,19 +252,21 @@ public class Predictor {
 	public double prob(InfixExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("InfixExpression not implemented.");
 	}
-	
+
 	public double prob(InstanceofExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("InstanceofExpression not implemented.");
 	}
-	
-	
+
 	// How many methods *could* be called at this location?
 	public int callableMethods(Expression invocation) {
-		return 0;
-	}
-	
-	public double methodProb(Expression invocation, IMethodBinding m, SyntacticContext ctx, String type) {
+		if(unit == null)
+			throw new NotImplementedException("Compilation Unit not defined.");
 		
+		VariableFinder f = new VariableFinder(unit);
+		return f.getMethods(invocation.getStartPosition()).length;
+	}
+
+	public double methodProb(Expression invocation, IMethodBinding m, SyntacticContext ctx, String type) {
 		// Number of different methods that have been used in this context with this type
 		int numSeen = data.methods.getCount(ctx, type);
 		// Number of times some method has been used in this context with this type
@@ -293,7 +298,7 @@ public class Predictor {
 			return Math.log(punseen * (1/((double)unseenMethods)) + pseen * mProb);
 		}
 	}
-	
+
 	public double methodExpressionProb (Expression invocation, IMethodBinding m, Expression methodTarget, List arguments, SyntacticContext ctx, String type) {
 		double formProb = formProb(SyntacticForm.METHOD, ctx, type);
 		
@@ -325,7 +330,6 @@ public class Predictor {
 		}
 		return methodExpressionProb(e, m, e.getExpression(), e.arguments(), ctx, type);
 	}
-	
 
 	public double prob(SuperMethodInvocation e, SyntacticContext ctx, String type) {
 		IMethodBinding m = e.resolveMethodBinding();
@@ -376,7 +380,7 @@ public class Predictor {
 		if(!name.isDeclaration()) {
 			IBinding bind = name.resolveBinding();
 			ITypeBinding type = name.resolveTypeBinding();
-			
+
 			if(bind == null) {
 				throw new ResolveBindingException(name.toString());
 			}
@@ -393,10 +397,24 @@ public class Predictor {
 	}
 	
 	private int accessibleVars(Expression e, String type) {
-		// TODO : return the number of variables in the context at e's position of the given type
-		return 1;
+		if(unit == null) {
+			// because I'm lazy
+			throw new NotImplementedException("Compilation Unit is not set.");
+		}
+
+		VariableFinder f = new VariableFinder(unit);
+		IBinding[] binds = f.getVariables(e.getStartPosition());
+		int count = 0;
+
+		for(IBinding b : binds) {
+			String typeOther = b.getName();
+			if(type.equals(typeOther)) {
+				count++;
+			}
+		}
+		
+		return count;
 	}
-	
 	
 	public double prob(QualifiedName e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("QualifiedName not implemented.");
@@ -427,24 +445,25 @@ public class Predictor {
 	public double prob(PostfixExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("PostfixExpression not implemented.");
 	}
-	
+
 	public double prob(PrefixExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("PrefixExpression not implemented.");
 	}
-	
+
 	public double prob(SuperFieldAccess e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("SuperFieldAccess not implemented.");
 	}
-	
+
 	public double prob(ThisExpression e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("ThisExpression not implemented.");
 	}
-	
+
 	public double prob(TypeLiteral e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("TypeLiteral not implemented.");
 	}
-	
-	public double prob(VariableDeclarationExpression e, SyntacticContext ctx, String type) {
+
+	public double prob(VariableDeclarationExpression e, SyntacticContext ctx, String type)
+	{
 		throw new NotImplementedException("VariableDeclarationExpression not implemented.");
 	}
 	

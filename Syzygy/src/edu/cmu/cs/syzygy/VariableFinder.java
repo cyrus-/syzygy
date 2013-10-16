@@ -6,14 +6,19 @@ import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 @SuppressWarnings("restriction")
 public class VariableFinder {
 	private ScopeAnalyzer sa = null;
-	
+
 	public VariableFinder(CompilationUnit unit)
 	{
 		sa = new ScopeAnalyzer(unit);
 	}
-	
+
 	public IBinding[] getVariables(int offset)
 	{
 		return sa.getDeclarationsInScope(offset, ScopeAnalyzer.VARIABLES);
+	}
+
+	public IBinding[] getMethods(int offset)
+	{
+		return sa.getDeclarationsInScope(offset, ScopeAnalyzer.METHODS);
 	}
 }
