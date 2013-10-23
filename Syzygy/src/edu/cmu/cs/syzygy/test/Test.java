@@ -12,7 +12,6 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 
 import edu.cmu.cs.syzygy.Trainer;
 import edu.cmu.cs.syzygy.TrainingData;
-import edu.cmu.cs.syzygy.TrainingVisitor;
 
 public class Test implements Runnable {
 	private Random generator = new Random();

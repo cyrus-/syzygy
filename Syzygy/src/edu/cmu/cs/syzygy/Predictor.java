@@ -3,45 +3,45 @@ package edu.cmu.cs.syzygy;
 import java.util.List;
 
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Annotation;
+import org.eclipse.jdt.core.dom.ArrayAccess;
+import org.eclipse.jdt.core.dom.ArrayCreation;
+import org.eclipse.jdt.core.dom.ArrayInitializer;
 import org.eclipse.jdt.core.dom.AssertStatement;
+import org.eclipse.jdt.core.dom.Assignment;
+import org.eclipse.jdt.core.dom.BooleanLiteral;
 import org.eclipse.jdt.core.dom.BreakStatement;
+import org.eclipse.jdt.core.dom.CastExpression;
+import org.eclipse.jdt.core.dom.CharacterLiteral;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ConditionalExpression;
 import org.eclipse.jdt.core.dom.ConstructorInvocation;
 import org.eclipse.jdt.core.dom.ContinueStatement;
 import org.eclipse.jdt.core.dom.DoStatement;
 import org.eclipse.jdt.core.dom.EnhancedForStatement;
 import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
 import org.eclipse.jdt.core.dom.EnumDeclaration;
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.ForStatement;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.IfStatement;
-import org.eclipse.jdt.core.dom.LabeledStatement;
-import org.eclipse.jdt.core.dom.Name;
-import org.eclipse.jdt.core.dom.QualifiedName;
-import org.eclipse.jdt.core.dom.Annotation;
-import org.eclipse.jdt.core.dom.ArrayAccess;
-import org.eclipse.jdt.core.dom.ArrayCreation;
-import org.eclipse.jdt.core.dom.ArrayInitializer;
-import org.eclipse.jdt.core.dom.Assignment;
-import org.eclipse.jdt.core.dom.BooleanLiteral;
-import org.eclipse.jdt.core.dom.CastExpression;
-import org.eclipse.jdt.core.dom.CharacterLiteral;
-import org.eclipse.jdt.core.dom.ClassInstanceCreation;
-import org.eclipse.jdt.core.dom.ConditionalExpression;
-import org.eclipse.jdt.core.dom.Expression;
-import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.InstanceofExpression;
+import org.eclipse.jdt.core.dom.LabeledStatement;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NullLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
+import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
@@ -58,11 +58,8 @@ import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.TypeDeclarationStatement;
 import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
-import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
-
-import visit.LiteralVisitor;
 
 public class Predictor {
 	private TrainingData data;
@@ -181,10 +178,6 @@ public class Predictor {
 		}
 	}
 
-	private boolean isInt(String type) {
-		return (type.equals("int") || type.equals("short") || type.equals("long") 
-				|| type.equals("byte"));
-	}
 	
 	/* different predict methods for different subtypes of AST Node 
 	 * public double predict();
@@ -192,7 +185,7 @@ public class Predictor {
 	public double prob(NumberLiteral x, SyntacticContext ctx, String type) {
 		double formProb = formProb(SyntacticForm.LIT, ctx, type);
 		
-		if (isInt(type)) {
+		if (Util.isInt(type)) {
 			return formProb + data.intData.lnProb(Util.normalizeNumberLiteral(x, type));
 		} else {
 			return formProb + data.floatingData.lnProb(Util.normalizeNumberLiteral(x, type));
@@ -206,8 +199,15 @@ public class Predictor {
 	}
 	
 	public double prob(BooleanLiteral b, SyntacticContext ctx, String type) throws InvalidDataException {
-		// TRUE = FALSE ???
-		return (formProb(SyntacticForm.LIT, ctx, type) + Math.log(0.5));
+		double p;
+		if (data.booleanLiteral.fst.equals(0)) {
+			p = Math.log(0.5);
+		} else if (b.booleanValue()) {
+			p = Math.log((double) data.booleanLiteral.snd / (double) data.booleanLiteral.fst);
+		} else {
+			p = Math.log(((double) (data.booleanLiteral.fst - data.booleanLiteral.snd)) / (double) data.booleanLiteral.fst);
+		}
+		return (formProb(SyntacticForm.LIT, ctx, type) + p);
 	}
 
     public double prob(CharacterLiteral s, SyntacticContext ctx, String type) throws InvalidDataException {
@@ -325,10 +325,10 @@ public class Predictor {
 		Expression methodTarget = e.getExpression();
 		
 		if (methodTarget == null) {
-			// Ideally, create a ThisExpression. Unfortunately, ThisExpression cannot be initialized by clients. 
-			// Probably use a custom class that extends Expression 
+			methodTarget = Util.newThisExpression(e);
 		}
-		return methodExpressionProb(e, m, e.getExpression(), e.arguments(), ctx, type);
+		
+		return methodExpressionProb(e, m, methodTarget, e.arguments(), ctx, type);
 	}
 
 	public double prob(SuperMethodInvocation e, SyntacticContext ctx, String type) {
@@ -339,6 +339,8 @@ public class Predictor {
 		}
 		
 		// TODO: Create a method target "super"
+		
+		
 		return methodExpressionProb(e, m, null, e.arguments(), ctx, type);
 	}
 	
@@ -346,55 +348,9 @@ public class Predictor {
 	public double prob(FieldAccess e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("FieldAccess not implemented.");
 	}
+
 	
 
-	// TODO : CHECK/FIX
-	private boolean isEnumLiteral (Name name) {
-		ITypeBinding typ = name.resolveTypeBinding();
-		
-		if(name instanceof SimpleName) {
-			SimpleName s = (SimpleName)name;
-			if(s.isDeclaration())
-				return false;
-		}
-		
-		if (typ == null) return false;
-		
-		if(name.getParent() instanceof EnumDeclaration || name.getParent() instanceof EnumConstantDeclaration) {
-			return false;
-		}
-		
-		if(typ.isEnum()) {
-			String option = name.toString();
-			
-			for(IVariableBinding b : typ.getDeclaredFields()) {
-				if(b.getName().equals(option)) return true;
-			}
-		}
-		return false;
-	}
-	
-	
-	// TODO : CHECK/FIX
-	private boolean isVar(SimpleName name) {
-		if(!name.isDeclaration()) {
-			IBinding bind = name.resolveBinding();
-			ITypeBinding type = name.resolveTypeBinding();
-
-			if(bind == null) {
-				throw new ResolveBindingException(name.toString());
-			}
-			
-			if (type == null) {
-				throw new ResolveBindingException(name.toString());
-			}
-			
-			if(bind.getKind() == IBinding.VARIABLE) {
-				return true;
-			}
-		}
-		return false;
-	}
 	
 	private int accessibleVars(Expression e, String type) {
 		if(unit == null) {
@@ -421,15 +377,15 @@ public class Predictor {
 	}
 	
 	public double prob(SimpleName e, SyntacticContext ctx, String type) {
-		if (isEnumLiteral(e)) {
+		if (Util.isEnumLiteral(e)) {
 			double formProb = formProb(SyntacticForm.LIT, ctx, type);
 			
 			// TODO : need more than this. Use something for unseen literals as well. Maybe same as methods?
-			double p = (double)data.enumLiterals.getFreq(ctx, type, e.toString()) / (double)data.enumLiterals.getCount(ctx, type);
+			double p = (double)data.enumLiterals.getFreq(ctx, type, e.getFullyQualifiedName()) / (double)data.enumLiterals.getCount(ctx, type);
 			
 			return Math.log(formProb) + Math.log(p);
 			
-		} else if (isVar(e)) {
+		} else if (Util.isVar(e)) {
 			double formProb = formProb(SyntacticForm.VAR, ctx, type);
 			
 			return formProb - Math.log(accessibleVars(e, type));

@@ -15,11 +15,20 @@ public class TrainingData {
 	public Table<SyntacticContext, String> variables = new Table<SyntacticContext, String>();
 	public FrequencyTable<IMethodBinding> methods = new FrequencyTable<IMethodBinding>();
 	public FrequencyTable<String> enumLiterals = new FrequencyTable<String>();
+	
+	public Pair<Integer, Integer> booleanLiteral = new Pair<Integer, Integer>(0,0);
 	// enumLiterals and literals must be kept in sync
 	
 	public TrainingData() {
 	}
 	
+	public void addBoolean(boolean b) {
+		booleanLiteral.fst = booleanLiteral.fst + 1;
+		
+		if (b) { 
+		  booleanLiteral.snd = booleanLiteral.snd + 1;
+		}
+	}
 	public int getLiteralFreq(SyntacticContext ctx, String type) {
 		return literals.getCount(ctx, type);
 	}
@@ -54,5 +63,9 @@ public class TrainingData {
 
 	public int getMethodFreq() {
 		return methods.getTotal();
+	}
+	
+	public void incrementTotal(SyntacticContext ctx, String type) {
+		
 	}
 }
