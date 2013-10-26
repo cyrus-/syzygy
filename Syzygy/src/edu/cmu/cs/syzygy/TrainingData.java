@@ -4,8 +4,11 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 
 import edu.cmu.cs.syzygy.lm.NGram;
 import edu.cmu.cs.syzygy.methods.IMethod;
+import edu.cmu.cs.syzygy.methods.MethodFactory;
 
 public class TrainingData {
+	
+	public MethodFactory method_factory = new MethodFactory();
 
 	public NGram intData = new NGram(2);
 	public NGram floatingData = new NGram(2);

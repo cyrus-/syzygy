@@ -14,6 +14,7 @@ import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
@@ -73,6 +74,8 @@ public class TrainingVisitor extends ASTVisitor {
 			train ((SuperMethodInvocation)e, ctx, type);
 		} else if (e instanceof FieldAccess) {
 			train ((FieldAccess)e, ctx, type);
+		} else if (e instanceof SuperFieldAccess) {
+			train ((SuperFieldAccess)e, ctx, type);
 		}
 		
 		return true;
@@ -155,30 +158,55 @@ public class TrainingVisitor extends ASTVisitor {
 	
 
 	private void train(ArrayAccess e, SyntacticContext ctx, String type) {
-		data.methods.add(ctx,type,ArrayAccessMethodFactory.getInstance(type));
+		data.methods.add(ctx, type, data.method_factory.getArrayAccessMethod(type));
+	}
+	
+	private void train(SuperFieldAccess e, SyntacticContext ctx, String type) {
+		IVariableBinding field_binding = e.resolveFieldBinding();
+		
+		if (field_binding == null || Modifier.isStatic(field_binding.getModifiers())) {
+			return;
+		}
+		
+	    data.variables.add(SyntacticContext.METHOD_TARGET, field_binding.getDeclaringClass().getQualifiedName());
+		
+		data.methods.add(ctx, type, data.method_factory.getFieldAccessMethod(e));
 	}
 	
 
 	private void train(FieldAccess e, SyntacticContext ctx, String type) {
-		data.methods.add(ctx, type, FieldAccessMethodFactory.getInstance(e));
+		IVariableBinding field_binding = e.resolveFieldBinding();
+		
+		if (field_binding == null || Modifier.isStatic(field_binding.getModifiers())) {
+			return;
+		}
+		
+		if (e.getExpression() == null) {
+			// Implicit 'this'
+			data.variables.add(SyntacticContext.METHOD_TARGET, field_binding.getDeclaringClass().getQualifiedName());
+		}
+		
+		data.methods.add(ctx, type, data.method_factory.getFieldAccessMethod(e));
 	}
 
 	
 	public void train(MethodInvocation mi, SyntacticContext ctx, String type)
 	{
-		System.out.println(mi);
-		
 		IMethodBinding meth = mi.resolveMethodBinding();
-		
+
 		if(meth == null)
 			return;
 		
-		if (mi.getExpression() == null && (!Modifier.isStatic(meth.getModifiers()))) {
+		if (!Modifier.isStatic(meth.getModifiers())) {
+		
+
+		if (mi.getExpression() == null) {
 			// Assume a this expression
 			data.variables.add(SyntacticContext.METHOD_TARGET, meth.getDeclaringClass().getQualifiedName());
 		}
 		
-		data.methods.add(ctx, type, JDTMethodFactory.getInstance(meth));
+		data.methods.add(ctx, type, data.method_factory.getJDTMethod(meth));
+		}
 	}
 	
 	

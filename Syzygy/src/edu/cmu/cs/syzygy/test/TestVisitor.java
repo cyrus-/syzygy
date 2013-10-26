@@ -35,7 +35,7 @@ public class TestVisitor extends ASTVisitor {
 					double prob = pred.prob(expr, Util.findContext(expr), type);
 					table.addResult(expr, type, prob);
 				} catch(NotImplementedException e) {
-					
+					System.out.println("Not implemented: " + e.getMessage());
 				}
 			}
 		}

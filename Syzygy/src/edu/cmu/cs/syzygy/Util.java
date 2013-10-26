@@ -99,10 +99,14 @@ public class Util {
 		return false;
 	}
 
-	// TODO : Integer? what else?
+	// TODO : what else?
 	public static boolean isInt(String type) {
 		return (type.equals("int") || type.equals("short") || type.equals("long") 
-				|| type.equals("byte"));
+				|| type.equals("byte") || type.equals("Integer"));
+	}
+	
+	public static boolean isNumber(String type) {
+	  return isInt(type) || type.equals("float") || type.equals("double");
 	}
 	
 	/*

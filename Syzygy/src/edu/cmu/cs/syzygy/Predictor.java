@@ -1,5 +1,6 @@
 package edu.cmu.cs.syzygy;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,6 +65,8 @@ import org.eclipse.jdt.core.dom.WhileStatement;
 
 import edu.cmu.cs.syzygy.methods.ArrayAccessMethod;
 import edu.cmu.cs.syzygy.methods.ArrayAccessMethodFactory;
+import edu.cmu.cs.syzygy.methods.FieldAccessMethod;
+import edu.cmu.cs.syzygy.methods.FieldAccessMethodFactory;
 import edu.cmu.cs.syzygy.methods.IMethod;
 import edu.cmu.cs.syzygy.methods.JDTMethod;
 import edu.cmu.cs.syzygy.methods.JDTMethodFactory;
@@ -328,8 +331,25 @@ public class Predictor {
 	}
 	
 
+	public double prob(FieldAccess e, SyntacticContext ctx, String type) {
+		IVariableBinding field_binding = e.resolveFieldBinding();
+		
+		if (field_binding == null) {
+			throw new ResolveBindingException(e.getName().toString());
+		}
+		
+		if (Modifier.isStatic(field_binding.getModifiers())) {
+			throw new NotImplementedException("Static field");
+		}
+		
+		FieldAccessMethod m = FieldAccessMethodFactory.getInstance(e);
+		
+		return methodExpressionProb(e, m, e.getExpression(), new ArrayList(), ctx, type);
+	}
+
+
 	public double prob(ArrayAccess e, SyntacticContext ctx, String type) {
-		ArrayAccessMethod m = ArrayAccessMethodFactory.getInstance(type);
+		ArrayAccessMethod m = data.method_factory.getArrayAccessMethod(type);
 		List args = new ArrayList();
 		args.add(e.getIndex());
 		return methodExpressionProb (e, m, e.getArray(), args, ctx, type);
@@ -338,16 +358,21 @@ public class Predictor {
 	public double prob(MethodInvocation e, SyntacticContext ctx, String type) {
 		
 		IMethodBinding m = e.resolveMethodBinding();
-		
+
 		if (m == null) {
 			throw new ResolveBindingException(e.getName().toString());
 		}
 		
-		JDTMethod meth = JDTMethodFactory.getInstance(m);
+		if (Modifier.isStatic(m.getModifiers())) {
+			throw new NotImplementedException("Static method");
+		}
+		
+		JDTMethod meth = data.method_factory.getJDTMethod(m);
 		
 		return methodExpressionProb(e, meth, e.getExpression(), e.arguments(), ctx, type);
 	}
 
+	
 	public double prob(SuperMethodInvocation e, SyntacticContext ctx, String type) {
 		IMethodBinding m = e.resolveMethodBinding();
 		
@@ -356,14 +381,10 @@ public class Predictor {
 		}
 		
 		
-		return methodExpressionProb(e, JDTMethodFactory.getInstance(m), null, e.arguments(), ctx, type);
+		return methodExpressionProb(e, data.method_factory.getJDTMethod(m), null, e.arguments(), ctx, type);
 	}
 	
 	
-	public double prob(FieldAccess e, SyntacticContext ctx, String type) {
-		throw new NotImplementedException("FieldAccess not implemented.");
-	}
-
 	
 
 	
@@ -412,7 +433,15 @@ public class Predictor {
 	}
 	
 	public double prob(NullLiteral e, SyntacticContext ctx, String type) {
-		throw new NotImplementedException("NullLiteral not implemented.");
+		double formProb = formProb(SyntacticForm.LIT, ctx, type);
+		
+		if (Util.isNumber(type)) {
+			return formProb + data.intData.lnProb("0");
+		} else if (type.equals("String")) {
+			return formProb + data.stringData.lnProb("");
+		} else {
+			return formProb;
+		}
 	}
 	
 	public double prob(PostfixExpression e, SyntacticContext ctx, String type) {
@@ -428,7 +457,7 @@ public class Predictor {
 	}
 
 	public double prob(ThisExpression e, SyntacticContext ctx, String type) {
-		throw new NotImplementedException("ThisExpression not implemented.");
+		return variableProb(e, ctx, type);
 	}
 
 	public double prob(TypeLiteral e, SyntacticContext ctx, String type) {
@@ -438,102 +467,5 @@ public class Predictor {
 	public double prob(VariableDeclarationExpression e, SyntacticContext ctx, String type)
 	{
 		throw new NotImplementedException("VariableDeclarationExpression not implemented.");
-	}
-	
-	/* STATEMENTS */
-	public double prob(Statement s) {
-		if (s instanceof AssertStatement) return prob((AssertStatement)s);
-		else if (s instanceof BreakStatement) return prob((BreakStatement)s);
-		else if (s instanceof ConstructorInvocation) return prob((ConstructorInvocation)s);
-		else if (s instanceof ContinueStatement) return prob((ContinueStatement)s);
-		else if (s instanceof DoStatement) return prob((DoStatement)s);
-		else if (s instanceof EnhancedForStatement) return prob((EnhancedForStatement)s);
-		else if (s instanceof ExpressionStatement) return prob((ExpressionStatement)s);
-		else if (s instanceof ForStatement) return prob((ForStatement)s);
-		else if (s instanceof IfStatement) return prob((IfStatement)s);
-		else if (s instanceof LabeledStatement) return prob((LabeledStatement)s);
-		else if (s instanceof ReturnStatement) return prob((ReturnStatement)s);
-		else if (s instanceof SuperConstructorInvocation) return prob((SuperConstructorInvocation)s);
-		else if (s instanceof SwitchCase) return prob((SwitchCase)s);
-		else if (s instanceof SwitchStatement) return prob((SwitchStatement)s);
-		else if (s instanceof SynchronizedStatement) return prob((SynchronizedStatement)s);
-		else if (s instanceof ThrowStatement) return prob((ThrowStatement)s);
-		else if (s instanceof TryStatement) return prob((TryStatement)s);
-		else if (s instanceof TypeDeclarationStatement) return prob((TypeDeclarationStatement)s);
-		else if (s instanceof VariableDeclarationStatement) return prob((VariableDeclarationStatement)s);
-		else if (s instanceof WhileStatement) return prob((WhileStatement)s);
-		else throw new RuntimeException("Invalid statement form!");
-	}
-	
-	public double prob(AssertStatement s) {
-		throw new NotImplementedException("AssertStatement not implemented.");
-	}
-	
-	public double prob(BreakStatement s) {
-		throw new NotImplementedException("BreakStatement not implemented.");
-	}
-	
-	public double prob(ConstructorInvocation s) {
-		throw new NotImplementedException("ConstructorInvocation not implemented.");
-	}
-	
-	public double prob(ContinueStatement s) {
-		throw new NotImplementedException("ContinueStatement not implemented.");
-	}
-	
-	public double prob(DoStatement s) {
-		throw new NotImplementedException("DoStatement not implemented.");
-	}
-	
-	public double prob(EnhancedForStatement s) {
-		throw new NotImplementedException("EnhancedForStatement not implemented.");
-	}
-	
-	public double prob(ExpressionStatement s) {
-		throw new NotImplementedException("ExpressionStatement not implemented.");
-	}
-	
-	public double prob(ForStatement s) {
-		throw new NotImplementedException("ForStatement not implemented.");
-	}
-	
-	public double prob(IfStatement s) {
-		throw new NotImplementedException("IfStatement not implemented.");
-	}
-	
-	public double prob(LabeledStatement s) {
-		throw new NotImplementedException("LabeledStatement not implemented.");
-	}
-	
-	public double prob(ReturnStatement s) {
-		throw new NotImplementedException("ReturnStatement not implemented.");
-	}
-	
-	public double prob(SuperConstructorInvocation s) {
-		throw new NotImplementedException("SuperConstructorInvocation not implemented.");
-	}
-	
-	public double prob(SynchronizedStatement s) {
-		throw new NotImplementedException("SynchronizedStatement not implemented.");
-	}
-	
-	public double prob(ThrowStatement s) {
-		throw new NotImplementedException("ThrowStatement not implemented.");
-	}
-	
-	public double prob(TryStatement s) {
-		throw new NotImplementedException("TryStatement not implemented.");
-	}
-	
-	public double prob(TypeDeclarationStatement s) {
-		throw new NotImplementedException("TypeDeclarationStatement not implemented.");
-	}
-	
-	public double prob(VariableDeclarationStatement s) {
-		throw new NotImplementedException("VariableDeclarationStatement not implemented.");
-	}
-	
-	public double prob(WhileStatement s) {
-		throw new NotImplementedException("WhileStatement not implemented.");
 	}
 }
