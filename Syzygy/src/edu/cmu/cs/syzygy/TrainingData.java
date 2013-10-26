@@ -3,6 +3,7 @@ package edu.cmu.cs.syzygy;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 
 import edu.cmu.cs.syzygy.lm.NGram;
+import edu.cmu.cs.syzygy.methods.IMethod;
 
 public class TrainingData {
 
@@ -11,9 +12,10 @@ public class TrainingData {
 	public NGram stringData = new NGram(2);
 	public NGram charData = new NGram(2);
 
+	public Table<SyntacticContext, String> total = new Table<SyntacticContext, String>();
 	public Table<SyntacticContext, String> literals = new Table<SyntacticContext, String>();
 	public Table<SyntacticContext, String> variables = new Table<SyntacticContext, String>();
-	public FrequencyTable<IMethodBinding> methods = new FrequencyTable<IMethodBinding>();
+	public FrequencyTable<IMethod> methods = new FrequencyTable<IMethod>();
 	public FrequencyTable<String> enumLiterals = new FrequencyTable<String>();
 	
 	public Pair<Integer, Integer> booleanLiteral = new Pair<Integer, Integer>(0,0);
@@ -41,6 +43,10 @@ public class TrainingData {
 		return methods.getFreq(ctx, type);
 	}
 	
+	public int getTotalFreq(SyntacticContext ctx, String type) {
+		return total.getCount(ctx,type);
+	}
+	
 	public int getLiteralFreq(SyntacticContext ctx) {
 		return literals.getCount1(ctx);
 	}
@@ -51,6 +57,10 @@ public class TrainingData {
 	
 	public int getMethodFreq(SyntacticContext ctx) {
 		return methods.getFreq(ctx);
+	}
+	
+	public int getTotalFreq(SyntacticContext ctx) {
+		return total.getCount1(ctx);
 	}
 
 	public int getLiteralFreq() {
@@ -65,7 +75,11 @@ public class TrainingData {
 		return methods.getTotal();
 	}
 	
+	public int getTotalFreq() {
+		return total.getTotal();
+	}
+	
 	public void incrementTotal(SyntacticContext ctx, String type) {
-		
+		total.add(ctx, type);
 	}
 }

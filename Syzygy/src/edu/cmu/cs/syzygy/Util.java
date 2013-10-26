@@ -11,6 +11,7 @@ import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
 import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
@@ -135,6 +136,14 @@ public class Util {
 				return SyntacticContext.METHOD_TARGET;
 			} else {
 			  return SyntacticContext.METHOD_ARGUMENT;
+			}
+		} else if (parent instanceof FieldAccess) {
+			if (((FieldAccess)parent).getExpression() == node) {
+				return SyntacticContext.METHOD_TARGET;
+			} else {
+				//TODO : Should never happen right?
+				System.out.println("field access has more than one child!!");
+				return SyntacticContext.OTHER;
 			}
 		} else if(parent instanceof Block || parent instanceof ExpressionStatement) {
 			return SyntacticContext.STMT;

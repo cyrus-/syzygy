@@ -1,6 +1,9 @@
 package edu.cmu.cs.syzygy.test;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -87,6 +90,12 @@ public class Test implements Runnable {
 			for(File test : outls) {
 				System.out.println("Testing on " + test);
 				JavaFile testFile = new JavaFile(test, prj);
+				
+				try {
+					visitor.setFile(test, new BufferedWriter(new FileWriter(test.getName() + Integer.toString(i))));
+				} catch (IOException e) {
+					System.out.println("Unable to write to dump file");
+				}
 				testFile.accept(visitor);
 			}
 			

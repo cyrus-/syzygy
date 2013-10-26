@@ -2,6 +2,7 @@ package edu.cmu.cs.syzygy.test;
 import java.util.LinkedList;
 
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Expression;
 
 import edu.cmu.cs.syzygy.SyntacticContext;
 import edu.cmu.cs.syzygy.Util;
@@ -11,7 +12,7 @@ public class ResultTable {
 	private int total = 0;
 	private double total_prob = 0.0;
 	
-	public void addResult(ASTNode node, String type, final double prob)
+	public void addResult(Expression node, String type, final double prob)
 	{
 		Result result = new Result(node, type, Util.findForm(node), Util.findContext(node), prob);
 		probabilities.add(result);

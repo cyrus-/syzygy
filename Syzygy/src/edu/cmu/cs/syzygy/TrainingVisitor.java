@@ -30,6 +30,11 @@ import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 
+import edu.cmu.cs.syzygy.methods.ArrayAccessMethodFactory;
+import edu.cmu.cs.syzygy.methods.FieldAccessMethodFactory;
+import edu.cmu.cs.syzygy.methods.IMethod;
+import edu.cmu.cs.syzygy.methods.JDTMethodFactory;
+
 
 public class TrainingVisitor extends ASTVisitor {
 	public TrainingData data = null;
@@ -44,6 +49,8 @@ public class TrainingVisitor extends ASTVisitor {
 		
 		if (e instanceof BooleanLiteral) {
 			train((BooleanLiteral)e, ctx, type);
+		} else if (e instanceof ArrayAccess) {
+			train ((ArrayAccess)e, ctx, type);
 		} else if (e instanceof CharacterLiteral) {
 			train((CharacterLiteral)e, ctx, type);
 		} else if (e instanceof StringLiteral) {
@@ -64,12 +71,13 @@ public class TrainingVisitor extends ASTVisitor {
 			train ((ThisExpression)e, ctx, type);
 		} else if (e instanceof SuperMethodInvocation) {
 			train ((SuperMethodInvocation)e, ctx, type);
+		} else if (e instanceof FieldAccess) {
+			train ((FieldAccess)e, ctx, type);
 		}
 		
 		return true;
 		/*
 	  if (e instanceof Annotation) return prob((Annotation)e, ctx, type);
-	  else if (e instanceof ArrayAccess) return prob((ArrayAccess)e, ctx, type);
 	  else if (e instanceof ArrayCreation) return prob((ArrayCreation)e, ctx, type);
 	  else if (e instanceof Assignment) return prob((Assignment)e, ctx, type);
 	  else if (e instanceof CastExpression) return prob((CastExpression)e, ctx, type);
@@ -86,14 +94,13 @@ public class TrainingVisitor extends ASTVisitor {
 	  else throw new RuntimeException("Invalid expression form!");
 	  */
     }
-
+	
 	private void train(ThisExpression e, SyntacticContext ctx, String type) {
-		
+		data.variables.add(ctx, type);
 	}
 
 	private void train(NullLiteral e, SyntacticContext ctx, String type) {
-		// TODO Auto-generated method stub
-		
+		data.literals.add(ctx, type);
 	}
 
 	// TODO : Check
@@ -117,6 +124,7 @@ public class TrainingVisitor extends ASTVisitor {
 		data.literals.add(ctx, type);
 	}
 
+	
 	public void train(NumberLiteral lit, SyntacticContext ctx, String type)
 	{
 		System.out.println(lit + " " + lit.resolveTypeBinding());
@@ -131,17 +139,30 @@ public class TrainingVisitor extends ASTVisitor {
 		
 	}
 	
+	
 	public void train(StringLiteral str, SyntacticContext ctx, String type)
 	{
 		data.stringData.increment(str.getLiteralValue());
 		data.literals.add(ctx, type);
 	}
 	
+	
 	public void train(CharacterLiteral chr, SyntacticContext ctx, String type)
 	{
 		data.charData.increment(Character.toString(chr.charValue()));
 		data.literals.add(ctx, type);
 	}
+	
+
+	private void train(ArrayAccess e, SyntacticContext ctx, String type) {
+		data.methods.add(ctx,type,ArrayAccessMethodFactory.getInstance(type));
+	}
+	
+
+	private void train(FieldAccess e, SyntacticContext ctx, String type) {
+		data.methods.add(ctx, type, FieldAccessMethodFactory.getInstance(e));
+	}
+
 	
 	public void train(MethodInvocation mi, SyntacticContext ctx, String type)
 	{
@@ -154,25 +175,23 @@ public class TrainingVisitor extends ASTVisitor {
 		
 		if (mi.getExpression() == null && (!Modifier.isStatic(meth.getModifiers()))) {
 			// Assume a this expression
-			// TODO : add to variables?
 			data.variables.add(SyntacticContext.METHOD_TARGET, meth.getDeclaringClass().getQualifiedName());
 		}
 		
-		data.methods.add(ctx, type, meth);
+		data.methods.add(ctx, type, JDTMethodFactory.getInstance(meth));
 	}
 	
 	
-	private void train(SuperMethodInvocation e, SyntacticContext ctx,
-			String type) {
-		
+	private void train(SuperMethodInvocation e, SyntacticContext ctx, String type) {
 		IMethodBinding meth = e.resolveMethodBinding();
 		
 		if (meth == null)
 			return;
 		
 		// TODO : what to do with super? add to variables?
+		data.variables.add(SyntacticContext.METHOD_TARGET, meth.getDeclaringClass().getQualifiedName());
 		
-		data.methods.add(ctx, type, meth);
+		data.methods.add(ctx, type, JDTMethodFactory.getInstance(meth));
 	}
 
 	

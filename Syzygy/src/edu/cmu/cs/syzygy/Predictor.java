@@ -1,5 +1,6 @@
 package edu.cmu.cs.syzygy;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -60,6 +61,12 @@ import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
+
+import edu.cmu.cs.syzygy.methods.ArrayAccessMethod;
+import edu.cmu.cs.syzygy.methods.ArrayAccessMethodFactory;
+import edu.cmu.cs.syzygy.methods.IMethod;
+import edu.cmu.cs.syzygy.methods.JDTMethod;
+import edu.cmu.cs.syzygy.methods.JDTMethodFactory;
 
 public class Predictor {
 	private TrainingData data;
@@ -145,20 +152,20 @@ public class Predictor {
 		int numLit = data.getLiteralFreq(ctx, type);
 		int numVar = data.getVariableFreq(ctx, type);
 		int numMethods = data.getMethodFreq(ctx, type);
-		int total = numLit + numMethods + numVar;
+		int total = data.getTotalFreq(ctx, type); //numLit + numMethods + numVar;
 		
 		if(total == 0) {
 			numLit = data.getLiteralFreq(ctx);
 			numVar = data.getVariableFreq(ctx);
 			numMethods = data.getMethodFreq(ctx);
-			total = numLit + numVar + numMethods;
+			total = data.getTotalFreq(ctx, type); //numLit + numVar + numMethods;
 			
 			if (total == 0) {
 				numLit = data.getLiteralFreq();
 				numVar = data.getVariableFreq();
 				numMethods = data.getMethodFreq();
 				
-				total = numLit + numVar + numMethods;
+				total = data.getTotalFreq(); //numLit + numVar + numMethods;
 				
 				if (total == 0) {
 					throw new InvalidDataException("No form data in training data.");
@@ -168,11 +175,11 @@ public class Predictor {
 		
 		switch (form) {
 		case LIT:
-			return Math.log(numLit / total);
+			return Math.log(numLit) - Math.log(total);
 		case METHOD:
-			return Math.log(numMethods / total);
+			return Math.log(numMethods) - Math.log(total);
 		case VAR:
-			return Math.log(numVar / total);
+			return Math.log(numVar) - Math.log(total);
 	    default:
 	    	throw new RuntimeException("form switching didn't work.. blah");
 		}
@@ -220,9 +227,6 @@ public class Predictor {
 		throw new NotImplementedException("Annotation not implemented.");
 	}
 	
-	public double prob(ArrayAccess e, SyntacticContext ctx, String type) {
-		throw new NotImplementedException("ArrayAccess not implemented.");
-	}
 	
 	public double prob(ArrayCreation e, SyntacticContext ctx, String type) {
 		throw new NotImplementedException("ArrayCreation not implemented.");
@@ -266,7 +270,7 @@ public class Predictor {
 		return f.getMethods(invocation.getStartPosition()).length;
 	}
 
-	public double methodProb(Expression invocation, IMethodBinding m, SyntacticContext ctx, String type) {
+	public double methodProb(Expression invocation, IMethod m, SyntacticContext ctx, String type) {
 		// Number of different methods that have been used in this context with this type
 		int numSeen = data.methods.getCount(ctx, type);
 		// Number of times some method has been used in this context with this type
@@ -299,19 +303,36 @@ public class Predictor {
 		}
 	}
 
-	public double methodExpressionProb (Expression invocation, IMethodBinding m, Expression methodTarget, List arguments, SyntacticContext ctx, String type) {
+	public double methodExpressionProb (Expression invocation, IMethod m, Expression methodTarget, List arguments, SyntacticContext ctx, String type) {
 		double formProb = formProb(SyntacticForm.METHOD, ctx, type);
 		
 		double mProb = methodProb(invocation, m, ctx, type);
 		
-		double tProb = prob(methodTarget, SyntacticContext.METHOD_TARGET, m.getReturnType().getQualifiedName());
+		double tProb = 0;
+		if (! m.isStatic()) {
+			if (methodTarget == null) {
+				// Implicit 'this' variable
+				variableProb(invocation, SyntacticContext.METHOD_TARGET, m.getTargetType());
+			}
+			else {
+				tProb = prob(methodTarget, SyntacticContext.METHOD_TARGET, m.getTargetType());
+			}
+		}
 		
 		double aProb = 0;
 		for (int i = 0; i < arguments.size(); i++) {
-			aProb += prob((Expression)arguments.get(i), SyntacticContext.METHOD_ARGUMENT, m.getParameterTypes()[i].getQualifiedName());
+			aProb += prob((Expression)arguments.get(i), SyntacticContext.METHOD_ARGUMENT, m.getParameterTypes()[i]);
 		}
 		
 		return formProb + mProb + tProb + aProb;
+	}
+	
+
+	public double prob(ArrayAccess e, SyntacticContext ctx, String type) {
+		ArrayAccessMethod m = ArrayAccessMethodFactory.getInstance(type);
+		List args = new ArrayList();
+		args.add(e.getIndex());
+		return methodExpressionProb (e, m, e.getArray(), args, ctx, type);
 	}
 	
 	public double prob(MethodInvocation e, SyntacticContext ctx, String type) {
@@ -322,13 +343,9 @@ public class Predictor {
 			throw new ResolveBindingException(e.getName().toString());
 		}
 		
-		Expression methodTarget = e.getExpression();
+		JDTMethod meth = JDTMethodFactory.getInstance(m);
 		
-		if (methodTarget == null) {
-			methodTarget = Util.newThisExpression(e);
-		}
-		
-		return methodExpressionProb(e, m, methodTarget, e.arguments(), ctx, type);
+		return methodExpressionProb(e, meth, e.getExpression(), e.arguments(), ctx, type);
 	}
 
 	public double prob(SuperMethodInvocation e, SyntacticContext ctx, String type) {
@@ -338,10 +355,8 @@ public class Predictor {
 			throw new ResolveBindingException(e.getName().toString());
 		}
 		
-		// TODO: Create a method target "super"
 		
-		
-		return methodExpressionProb(e, m, null, e.arguments(), ctx, type);
+		return methodExpressionProb(e, JDTMethodFactory.getInstance(m), null, e.arguments(), ctx, type);
 	}
 	
 	
@@ -376,6 +391,10 @@ public class Predictor {
 		throw new NotImplementedException("QualifiedName not implemented.");
 	}
 	
+	private double variableProb(Expression e, SyntacticContext ctx, String type) {
+		return formProb(SyntacticForm.VAR, ctx, type) - Math.log(accessibleVars(e, type));
+	}
+	
 	public double prob(SimpleName e, SyntacticContext ctx, String type) {
 		if (Util.isEnumLiteral(e)) {
 			double formProb = formProb(SyntacticForm.LIT, ctx, type);
@@ -386,9 +405,7 @@ public class Predictor {
 			return Math.log(formProb) + Math.log(p);
 			
 		} else if (Util.isVar(e)) {
-			double formProb = formProb(SyntacticForm.VAR, ctx, type);
-			
-			return formProb - Math.log(accessibleVars(e, type));
+		    return variableProb(e, ctx, type);
 		} else {
 			throw new NotImplementedException("Name: " + e.toString() + "is neither enum literal nor variable");
 		}
