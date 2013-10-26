@@ -156,14 +156,6 @@ public class Util {
 			} else {
 			  return SyntacticContext.METHOD_ARGUMENT;
 			}
-		} else if (parent instanceof FieldAccess) {
-			if (((FieldAccess)parent).getExpression() == node) {
-				return SyntacticContext.METHOD_TARGET;
-			} else {
-				//TODO : Should never happen right?
-				System.out.println("field access has more than one child!!");
-				return SyntacticContext.OTHER;
-			}
 		} else if (parent instanceof QualifiedName) {
 			// Enum literal or field access
 			QualifiedName qn = ((QualifiedName)parent);
@@ -173,6 +165,12 @@ public class Util {
 				return findContext((Expression)parent);
 			} else {
 				return SyntacticContext.METHOD_TARGET;
+			}
+		} else if (parent instanceof FieldAccess) {
+			if (((FieldAccess)parent).getExpression().equals(node)) {
+				return SyntacticContext.METHOD_TARGET;
+			} else {
+				return findContext((Expression)parent);
 			}
 		} else if(parent instanceof Block || parent instanceof ExpressionStatement) {
 			return SyntacticContext.STMT;
