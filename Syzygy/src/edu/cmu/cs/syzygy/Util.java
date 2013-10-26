@@ -20,6 +20,7 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
@@ -50,10 +51,21 @@ public class Util {
 		} else throw new RuntimeException("weird number literal: " + x.getToken());
 	}
 	
+	
+	private static String getIdentifierFromName(Name name) {
+		if (name instanceof SimpleName) {
+			return ((SimpleName)name).getIdentifier();
+		} else {
+			return ((QualifiedName)name).getName().getIdentifier();
+		}
+	}
 
-	// TODO : CHECK/FIX
 	public static boolean isEnumLiteral (Name name) {
 		ITypeBinding typ = name.resolveTypeBinding();
+		
+		if (typ == null) {
+			throw new ResolveBindingException("Could not resolve: " + name.toString());
+		}
 		
 		if(name instanceof SimpleName) {
 			SimpleName s = (SimpleName)name;
@@ -61,14 +73,13 @@ public class Util {
 				return false;
 		}
 		
-		if (typ == null) return false;
-		
 		if(name.getParent() instanceof EnumDeclaration || name.getParent() instanceof EnumConstantDeclaration) {
 			return false;
 		}
 		
 		if(typ.isEnum()) {
-			String option = name.toString();
+			String option = getIdentifierFromName(name);
+			
 			
 			for(IVariableBinding b : typ.getDeclaredFields()) {
 				if(b.getName().equals(option)) return true;
@@ -78,17 +89,21 @@ public class Util {
 	}
 	
 	
+	// Turns a simple name into a full name. Used for enum literals
+	public static String getFullName(Name name) {
+		ITypeBinding type = name.resolveTypeBinding();
+		
+		if (type == null) throw new ResolveBindingException(name.toString());
+		
+		return type.getQualifiedName() + "." + getIdentifierFromName(name);
+	}
+	
 	// TODO : CHECK/FIX
 	public static boolean isVar(SimpleName name) {
 		if(!name.isDeclaration()) {
 			IBinding bind = name.resolveBinding();
-			ITypeBinding type = name.resolveTypeBinding();
-
-			if(bind == null) {
-				throw new ResolveBindingException(name.toString());
-			}
 			
-			if (type == null) {
+			if(bind == null) {
 				throw new ResolveBindingException(name.toString());
 			}
 			
@@ -148,6 +163,16 @@ public class Util {
 				//TODO : Should never happen right?
 				System.out.println("field access has more than one child!!");
 				return SyntacticContext.OTHER;
+			}
+		} else if (parent instanceof QualifiedName) {
+			// Enum literal or field access
+			QualifiedName qn = ((QualifiedName)parent);
+			
+			if (qn.getName().equals(node)) {
+				// This node is the last part of a qualified name
+				return findContext((Expression)parent);
+			} else {
+				return SyntacticContext.METHOD_TARGET;
 			}
 		} else if(parent instanceof Block || parent instanceof ExpressionStatement) {
 			return SyntacticContext.STMT;

@@ -24,9 +24,7 @@ public class MethodFactory {
 		} else return m;
 	}
 	
-	public FieldAccessMethod getFieldAccessMethod(SuperFieldAccess e){
-		IVariableBinding field_binding = e.resolveFieldBinding();
-		
+	public FieldAccessMethod getFieldAccessMethod(IVariableBinding field_binding) {
 		FieldAccessMethod m = fieldAccessMethods.get(field_binding);
 		if (m == null) {
 			FieldAccessMethod mnew = new FieldAccessMethod(field_binding.getDeclaringClass().getQualifiedName(), field_binding.getType().getQualifiedName(), Modifier.isStatic(field_binding.getModifiers()));
@@ -35,15 +33,16 @@ public class MethodFactory {
 		} else return m;
 	}
 	
+	public FieldAccessMethod getFieldAccessMethod(SuperFieldAccess e){
+		IVariableBinding field_binding = e.resolveFieldBinding();
+		
+		return getFieldAccessMethod(field_binding);
+	}
+	
 	public FieldAccessMethod getFieldAccessMethod(FieldAccess e){
 		IVariableBinding field_binding = e.resolveFieldBinding();
 		
-		FieldAccessMethod m = fieldAccessMethods.get(field_binding);
-		if (m == null) {
-			FieldAccessMethod mnew = new FieldAccessMethod(field_binding.getDeclaringClass().getQualifiedName(), field_binding.getType().getQualifiedName(), Modifier.isStatic(field_binding.getModifiers()));
-			fieldAccessMethods.put(field_binding, mnew);
-			return mnew;
-		} else return m;
+		return getFieldAccessMethod(field_binding);
 	}
 	
 	

@@ -64,12 +64,10 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
 
 import edu.cmu.cs.syzygy.methods.ArrayAccessMethod;
-import edu.cmu.cs.syzygy.methods.ArrayAccessMethodFactory;
 import edu.cmu.cs.syzygy.methods.FieldAccessMethod;
-import edu.cmu.cs.syzygy.methods.FieldAccessMethodFactory;
 import edu.cmu.cs.syzygy.methods.IMethod;
 import edu.cmu.cs.syzygy.methods.JDTMethod;
-import edu.cmu.cs.syzygy.methods.JDTMethodFactory;
+import edu.cmu.cs.syzygy.methods.MethodFactory;
 
 public class Predictor {
 	private TrainingData data;
@@ -81,40 +79,6 @@ public class Predictor {
 	
 	public void setUnit(CompilationUnit u) {
 		unit = u;
-	}
-	
-	public double predict(ASTNode n) {
-		if (n instanceof Expression) return predict((Expression)n);
-		else throw new RuntimeException("Invalid AST node type!");
-	}
-	
-	public double predict(Expression e, SyntacticContext c, String t) {
-		     if (e instanceof Annotation) return predict((Annotation)e, c, t);
-		else if (e instanceof ArrayAccess) return predict((ArrayAccess)e, c, t);
-		else if (e instanceof ArrayCreation) return predict((ArrayCreation)e, c, t);
-		else if (e instanceof Assignment) return predict((Assignment)e, c, t);
-		else if (e instanceof BooleanLiteral) return predict((BooleanLiteral)e, c, t);
-		else if (e instanceof CastExpression) return predict((CastExpression)e, c, t);
-		else if (e instanceof CharacterLiteral) return predict((CharacterLiteral)e, c, t);
-		else if (e instanceof ClassInstanceCreation) return predict((ClassInstanceCreation)e, c, t);
-		else if (e instanceof ConditionalExpression) return predict((ConditionalExpression)e, c, t);
-		else if (e instanceof FieldAccess) return predict((FieldAccess)e, c, t);
-		else if (e instanceof InfixExpression) return predict((InfixExpression)e, c, t);
-		else if (e instanceof MethodInvocation) return predict((MethodInvocation)e, c, t);
-		else if (e instanceof QualifiedName) return predict((QualifiedName)e, c, t);
-		else if (e instanceof SimpleName) return predict((SimpleName)e, c, t);
-		else if (e instanceof NullLiteral) return predict((NullLiteral)e, c, t);
-		else if (e instanceof NumberLiteral) return predict((NumberLiteral)e, c, t);
-		else if (e instanceof ParenthesizedExpression) return predict(((ParenthesizedExpression)e).getExpression(), c, t);
-		else if (e instanceof PostfixExpression) return predict((PostfixExpression)e, c, t);
-		else if (e instanceof PrefixExpression) return predict((PrefixExpression)e, c, t);
-		else if (e instanceof StringLiteral) return predict((StringLiteral)e, c, t);
-		else if (e instanceof SuperFieldAccess) return predict((SuperFieldAccess)e, c, t);
-		else if (e instanceof SuperMethodInvocation) return predict((SuperMethodInvocation)e, c, t);
-		else if (e instanceof ThisExpression) return predict((ThisExpression)e, c, t);
-		else if (e instanceof TypeLiteral) return predict((TypeLiteral)e, c, t); //Make this a snew syntactic form.
-		else if (e instanceof VariableDeclarationExpression) return predict((VariableDeclarationExpression)e, c, t);
-		else throw new RuntimeException("Invalid expression type!");
 	}
 	
 	private enum SyntacticForm {
@@ -342,7 +306,7 @@ public class Predictor {
 			throw new NotImplementedException("Static field");
 		}
 		
-		FieldAccessMethod m = FieldAccessMethodFactory.getInstance(e);
+		FieldAccessMethod m = data.method_factory.getFieldAccessMethod(e);
 		
 		return methodExpressionProb(e, m, e.getExpression(), new ArrayList(), ctx, type);
 	}
@@ -408,29 +372,62 @@ public class Predictor {
 		return count;
 	}
 	
+	public double prob(Name e, SyntacticContext ctx, String type) {
+
+		// should just eliminate this case
+		if (e instanceof SimpleName) {
+			if (((SimpleName)e).isDeclaration()) throw new NotImplementedException("declaration");
+		}
+		
+		if (Util.isEnumLiteral(e)) {
+			double formProb = formProb(SyntacticForm.LIT, ctx, type);
+			
+			// TODO : need more than this. Use something for unseen literals as well. Maybe same as methods?
+			double p = ((double)data.enumLiterals.getFreq(ctx, type, Util.getFullName(e))) / ((double)data.enumLiterals.getCount(ctx, type));
+			
+			return formProb + Math.log(p);
+			
+		} else if (e instanceof SimpleName && Util.isVar((SimpleName)e)) {
+		    return variableProb(e, ctx, type);
+		} else {
+			// Field Access
+			IBinding binding = e.resolveBinding();
+			
+			if (binding == null) throw new ResolveBindingException("Could not resolve Binding: " + e.toString());
+			
+			if (binding instanceof IVariableBinding) {
+				if (Modifier.isStatic(binding.getModifiers())) {
+					throw new NotImplementedException("Static field");
+				}
+				
+				FieldAccessMethod m = data.method_factory.getFieldAccessMethod((IVariableBinding)binding);
+				
+				if (e instanceof QualifiedName) {
+				  return methodExpressionProb(e, m, ((QualifiedName)e).getQualifier(), new ArrayList(), ctx, type);
+				} else {
+				  return methodExpressionProb(e, m, null, new ArrayList(), ctx, type);
+				}
+					
+			} else {
+				// Don't know what to do
+				throw new NotImplementedException("Name: " + e.toString() + "is not enum literal, variable or field");
+			}
+		}		
+	}
+	
+
+	public double prob(SimpleName e, SyntacticContext ctx, String type) {
+		return prob((Name)e, ctx, type);
+	}
+	
 	public double prob(QualifiedName e, SyntacticContext ctx, String type) {
-		throw new NotImplementedException("QualifiedName not implemented.");
+		return prob((Name)e, ctx, type);
 	}
 	
 	private double variableProb(Expression e, SyntacticContext ctx, String type) {
 		return formProb(SyntacticForm.VAR, ctx, type) - Math.log(accessibleVars(e, type));
 	}
 	
-	public double prob(SimpleName e, SyntacticContext ctx, String type) {
-		if (Util.isEnumLiteral(e)) {
-			double formProb = formProb(SyntacticForm.LIT, ctx, type);
-			
-			// TODO : need more than this. Use something for unseen literals as well. Maybe same as methods?
-			double p = (double)data.enumLiterals.getFreq(ctx, type, e.getFullyQualifiedName()) / (double)data.enumLiterals.getCount(ctx, type);
-			
-			return Math.log(formProb) + Math.log(p);
-			
-		} else if (Util.isVar(e)) {
-		    return variableProb(e, ctx, type);
-		} else {
-			throw new NotImplementedException("Name: " + e.toString() + "is neither enum literal nor variable");
-		}
-	}
 	
 	public double prob(NullLiteral e, SyntacticContext ctx, String type) {
 		double formProb = formProb(SyntacticForm.LIT, ctx, type);

@@ -13,6 +13,7 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import edu.cmu.cs.syzygy.NotImplementedException;
 import edu.cmu.cs.syzygy.Predictor;
+import edu.cmu.cs.syzygy.ResolveBindingException;
 import edu.cmu.cs.syzygy.TrainingData;
 import edu.cmu.cs.syzygy.Util;
 
@@ -36,6 +37,8 @@ public class TestVisitor extends ASTVisitor {
 					table.addResult(expr, type, prob);
 				} catch(NotImplementedException e) {
 					System.out.println("Not implemented: " + e.getMessage());
+				} catch (ResolveBindingException e) {
+					System.out.println("Could not resolve binding for: " + e.getMessage());
 				}
 			}
 		}

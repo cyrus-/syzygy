@@ -1,5 +1,7 @@
 package edu.cmu.cs.syzygy;
 
+import java.util.ArrayList;
+
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.ArrayAccess;
@@ -12,12 +14,14 @@ import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.ConditionalExpression;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldAccess;
+import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NullLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.PostfixExpression;
@@ -31,8 +35,8 @@ import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 
-import edu.cmu.cs.syzygy.methods.ArrayAccessMethodFactory;
-import edu.cmu.cs.syzygy.methods.FieldAccessMethodFactory;
+
+import edu.cmu.cs.syzygy.methods.FieldAccessMethod;
 import edu.cmu.cs.syzygy.methods.IMethod;
 import edu.cmu.cs.syzygy.methods.JDTMethodFactory;
 
@@ -106,18 +110,42 @@ public class TrainingVisitor extends ASTVisitor {
 		data.literals.add(ctx, type);
 	}
 
+	
+	public void train(Name e, SyntacticContext ctx, String type) {
+		if (Util.isEnumLiteral(e)) {
+			data.enumLiterals.add(ctx, type, Util.getFullName(e));
+		} else if (e instanceof SimpleName && Util.isVar((SimpleName)e)) {
+			data.variables.add(ctx, type);
+		} else {
+			// Field Access
+			IBinding binding = e.resolveBinding();
+			
+			if (e instanceof SimpleName) {
+				if (((SimpleName)e).isDeclaration()) return;
+			}
+			
+			if (binding == null) throw new ResolveBindingException("Could not resolve Binding: " + e.toString());
+			
+			if (binding instanceof IVariableBinding) {
+				if (Modifier.isStatic(binding.getModifiers())) {
+					throw new NotImplementedException("Static field");
+				}
+				
+				data.methods.add(ctx, type, data.method_factory.getFieldAccessMethod((IVariableBinding)binding));
+			} else {
+				// Don't know what to do
+				return;
+			}
+		}		
+	}
+	
 	// TODO : Check
 	private void train(SimpleName e, SyntacticContext ctx, String type) {
-		if (Util.isVar(e)) {
-		  data.variables.add(ctx, type);
-		} else if (Util.isEnumLiteral(e)) {
-			data.enumLiterals.add(ctx, type, e.getFullyQualifiedName());
-		}
+		train((Name)e, ctx, type);
 	}
 
 	private void train(QualifiedName e, SyntacticContext ctx, String type) {
-		// TODO Auto-generated method stub
-		
+		train((Name)e, ctx, type);
 	}
 
 	private void train(BooleanLiteral e, SyntacticContext ctx, String type) {
