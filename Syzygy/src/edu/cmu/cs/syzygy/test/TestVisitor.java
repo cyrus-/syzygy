@@ -1,10 +1,14 @@
 package edu.cmu.cs.syzygy.test;
 
 import java.io.BufferedWriter;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -43,87 +47,60 @@ public class TestVisitor extends ASTVisitor {
 			}
 		}
 	}
+	
+	private String[] tokenize(String s) {
+		return s.replaceAll("(\\W)", " $1 ").split("\\s+");
+	}
 
 	
-	private String dumpExpression_aux(ASTNode node)
+	private String dumpExpression_aux(ASTNode node) throws IOException
 	{
 		int start = node.getStartPosition();
-		String ret = node.toString().replace('\n', ' ').replace('\t', ' ');
+		// Assumption : 100 characters before the start position will be enough to find the two preceding tokens.
+		final int padded_start = start - Math.min(start, 100);
 		
-		try {
-			final int LENGTH = 100;
-			int new_start, real_length;
-			FileInputStream fin = new FileInputStream(test_file);
-			long SIZE_FILE = test_file.length();
-			
-			if(start - LENGTH < 0) {
-				new_start = 0;
-				real_length = start;
-			} else {
-				new_start = start - LENGTH;
-				real_length = LENGTH;
-			}
-			if(new_start + real_length > SIZE_FILE) {
-				real_length = (int)SIZE_FILE - new_start;
-			}
-			
-			byte []data = new byte[real_length];
-			fin.skip(new_start);
-			
-			assert(new_start < SIZE_FILE);
-			assert(new_start >= 0);
-			assert(new_start + real_length < SIZE_FILE);
-			int total_read = fin.read(data, 0, real_length);
+		StringBuilder b = new StringBuilder();
 
-			assert(total_read == real_length);
+		
+			byte[] buffer = new byte[start - padded_start];
+			FileInputStream file = new FileInputStream(test_file);
+			file.skip(padded_start);
 			
-			boolean inside_whitespace = true;
-			int current_pos = real_length - 1;
-			String token1 = null;
-			String token2 = null;
-			int start_token = 0;
+			file.read(buffer);
 			
-			while (current_pos >= 0) {
-				if(data[current_pos] == ' ' || data[current_pos] == '\t' || data[current_pos] == '\n') {
-					
-					if(!inside_whitespace) {
-						if(token1 == null) {
-							token1 = new String(data, current_pos + 1, start_token - current_pos);
-						} else {
-							token2 = new String(data, current_pos + 1, start_token - current_pos);
-							return token2 + " " + token1 + " " + ret;
-						}
-						inside_whitespace = true;
-					}
-					current_pos--;
-				} else {
-					if(inside_whitespace) {
-						inside_whitespace = false;
-						start_token = current_pos;
-					}
-					current_pos--;
-				}
-			}
+			file.close();
 			
-			if(token1 != null) {
-				return token1 + " " + ret;
+			String[] pretokens = tokenize(new String(buffer));
+			
+			if (pretokens.length < 2) {
+				for (int i = 0; i < pretokens.length; i++) {
+					b.append(pretokens[i]);
+					b.append(" ");
+			    }
+				b.reverse();
 			} else {
-				return ret;
+				b.append(pretokens[pretokens.length - 2]);
+				b.append(" ");
+				b.append(pretokens[pretokens.length - 1]);
+				b.append(" ");
 			}
 			
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return "";
+			for (String t : tokenize(node.toString())) {
+				b.append(t);
+				b.append(" ");
+			}
+			
+			return b.toString().trim();
+		
 	}
+
 	
 	private void dumpExpression(ASTNode node)
 	{
-		String tokens = dumpExpression_aux(node);
-		
 		try {
+
+			String tokens = dumpExpression_aux(node);
+			
 			output_file_buffer.write(tokens);
 			output_file_buffer.newLine();
 			output_file_buffer.flush();
@@ -131,7 +108,6 @@ public class TestVisitor extends ASTVisitor {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		//System.out.println(tokens);	
 	}
 
 	

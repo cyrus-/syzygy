@@ -30,7 +30,9 @@ public class MethodFactory {
 			FieldAccessMethod mnew = new FieldAccessMethod(field_binding.getDeclaringClass().getQualifiedName(), field_binding.getType().getQualifiedName(), Modifier.isStatic(field_binding.getModifiers()));
 			fieldAccessMethods.put(field_binding, mnew);
 			return mnew;
-		} else return m;
+		} else {
+			return m;
+		}
 	}
 	
 	public FieldAccessMethod getFieldAccessMethod(SuperFieldAccess e){
