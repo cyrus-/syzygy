@@ -44,24 +44,14 @@ import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.QualifiedName;
-import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
-import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
-import org.eclipse.jdt.core.dom.SwitchCase;
-import org.eclipse.jdt.core.dom.SwitchStatement;
-import org.eclipse.jdt.core.dom.SynchronizedStatement;
 import org.eclipse.jdt.core.dom.ThisExpression;
-import org.eclipse.jdt.core.dom.ThrowStatement;
-import org.eclipse.jdt.core.dom.TryStatement;
-import org.eclipse.jdt.core.dom.TypeDeclarationStatement;
 import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
-import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
-import org.eclipse.jdt.core.dom.WhileStatement;
 
 import edu.cmu.cs.syzygy.methods.ArrayAccessMethod;
 import edu.cmu.cs.syzygy.methods.FieldAccessMethod;
@@ -135,10 +125,14 @@ public class Predictor {
 				total = data.getTotalFreq(); //numLit + numVar + numMethods;
 				
 				if (total == 0) {
-					throw new InvalidDataException("No form data in training data.");
+					throw new InvalidDataException("No form data in training data : " + form.toString() + " , " + ctx.toString() + " , " + type);
 				}
 			}
 		}
+		
+		assert (numLit < total);
+		assert (numMethods < total);
+		assert (numVar < total);
 		
 		switch (form) {
 		case LIT:
@@ -380,12 +374,26 @@ public class Predictor {
 		}
 		
 		if (Util.isEnumLiteral(e)) {
+			Debug.print(Debug.Mode.ENUMLITERALS, Util.getFullName(e));
 			double formProb = formProb(SyntacticForm.LIT, ctx, type);
 			
 			// TODO : need more than this. Use something for unseen literals as well. Maybe same as methods?
-			double p = ((double)data.enumLiterals.getFreq(ctx, type, Util.getFullName(e))) / ((double)data.enumLiterals.getCount(ctx, type));
 			
-			return formProb + Math.log(p);
+			double literalCount = (double)data.enumLiterals.getFreq(ctx, type);
+			double literalFreq = (double)data.enumLiterals.getFreq(ctx, type, Util.getFullName(e));
+			
+			if (literalCount == 0) {
+				literalCount = data.enumLiterals.getFreq(type);
+				if (literalCount == 0) {
+					return Math.log(0);
+				}
+				literalFreq = data.enumLiterals.getFreq(type, Util.getFullName(e));
+			}
+			
+			Debug.print(Debug.Mode.ENUMLITERALS, "Count: " + Double.toString(literalCount));
+			Debug.print(Debug.Mode.ENUMLITERALS, "Freq: " + Double.toString(literalFreq));
+			
+			return formProb + Math.log(literalFreq) - Math.log(literalCount);
 			
 		} else if (e instanceof SimpleName && Util.isVar((SimpleName)e)) {
 		    return variableProb(e, ctx, type);
@@ -425,7 +433,14 @@ public class Predictor {
 	}
 	
 	private double variableProb(Expression e, SyntacticContext ctx, String type) {
-		return formProb(SyntacticForm.VAR, ctx, type) - Math.log(accessibleVars(e, type));
+		double formProb = formProb(SyntacticForm.VAR, ctx, type);
+		int accVar = accessibleVars(e, type);
+		
+		if (accVar == 0) {
+			return Math.log(0);
+		}
+		
+		return formProb - Math.log(accVar);
 	}
 	
 	

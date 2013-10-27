@@ -2,6 +2,7 @@ package edu.cmu.cs.syzygy;
 
 import java.util.ArrayList;
 
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.ArrayAccess;
@@ -42,11 +43,22 @@ import edu.cmu.cs.syzygy.methods.IMethod;
 public class TrainingVisitor extends ASTVisitor {
 	public TrainingData data = null;
 	
+	public void preVisit(ASTNode e) {
+		if (e instanceof Expression) {
+			visit((Expression)e);
+		}
+	}
 	
 	public boolean visit(Expression e) {
 		SyntacticContext ctx = Util.findContext(e);
 		
-		String type = e.resolveTypeBinding().getQualifiedName();
+		ITypeBinding t = e.resolveTypeBinding();
+		
+		if (t == null) {
+			Debug.print(Debug.Mode.EXCEPTIONS, "Could not resolve binding: " + e.toString());
+			return false;
+		}
+		String type = t.getQualifiedName();
 		
 		data.incrementTotal(ctx, type);
 		
@@ -156,7 +168,7 @@ public class TrainingVisitor extends ASTVisitor {
 	
 	public void train(NumberLiteral lit, SyntacticContext ctx, String type)
 	{
-		System.out.println(lit + " " + lit.resolveTypeBinding());
+		Debug.print(Debug.Mode.NUMBERLITERAL, lit + " " + lit.resolveTypeBinding());
 		
 	    if(Util.isInt(type)) {
 			data.intData.increment(lit.getToken());

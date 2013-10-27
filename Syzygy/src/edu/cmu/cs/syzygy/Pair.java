@@ -20,4 +20,9 @@ public class Pair<T1, T2> {
 		}
 		return false;
 	}
+	
+
+	public int hashCode() {
+		return (fst.toString() + snd.toString()).hashCode();
+	}
 }

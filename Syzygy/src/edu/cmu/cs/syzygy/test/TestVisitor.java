@@ -12,9 +12,12 @@ import java.util.regex.Matcher;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 
+import edu.cmu.cs.syzygy.Debug;
+import edu.cmu.cs.syzygy.InvalidDataException;
 import edu.cmu.cs.syzygy.NotImplementedException;
 import edu.cmu.cs.syzygy.Predictor;
 import edu.cmu.cs.syzygy.ResolveBindingException;
@@ -38,11 +41,14 @@ public class TestVisitor extends ASTVisitor {
 				String type = binding.getQualifiedName();
 				try {
 					double prob = pred.prob(expr, Util.findContext(expr), type);
+					Debug.print(Debug.Mode.INFO, "Probability of " + expr.toString() + " : " + Double.toString(prob));
 					table.addResult(expr, type, prob);
 				} catch(NotImplementedException e) {
-					System.out.println("Not implemented: " + e.getMessage());
+					Debug.print(Debug.Mode.EXCEPTIONS, "Not implemented: " + e.getMessage());
 				} catch (ResolveBindingException e) {
-					System.out.println("Could not resolve binding for: " + e.getMessage());
+					Debug.print(Debug.Mode.EXCEPTIONS, "Could not resolve binding for: " + e.getMessage());
+				} catch (InvalidDataException e) {
+					Debug.print(Debug.Mode.EXCEPTIONS, "Invalid data : " + e.getMessage());
 				}
 			}
 		}
@@ -124,5 +130,9 @@ public class TestVisitor extends ASTVisitor {
 	TestVisitor(TrainingData data)
 	{
 		pred = new Predictor(data);
+	}
+
+	public void setUnit(CompilationUnit unit) {
+		pred.setUnit(unit);
 	}
 }

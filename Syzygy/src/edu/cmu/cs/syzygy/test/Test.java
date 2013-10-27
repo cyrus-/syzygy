@@ -13,8 +13,11 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
+import edu.cmu.cs.syzygy.Debug;
+import edu.cmu.cs.syzygy.ResolveBindingException;
 import edu.cmu.cs.syzygy.Trainer;
 import edu.cmu.cs.syzygy.TrainingData;
+import edu.cmu.cs.syzygy.TrainingVisitor;
 
 public class Test implements Runnable {
 	private Random generator = new Random();
@@ -46,16 +49,19 @@ public class Test implements Runnable {
 	
 	private TrainingData trainWithList(IJavaProject prj, LinkedList<File> ls)
 	{
-		CompilationUnit[] units = new CompilationUnit[ls.size()];
-		int i = 0;
+		TrainingVisitor visitor = new TrainingVisitor();
 		
 		for(File file : ls) {
 			JavaFile jfile = new JavaFile(file, prj);
-			units[i] = jfile.getUnit();
-			++i;
+			try {
+			  jfile.accept(visitor);
+			} catch (ResolveBindingException e) {
+				System.out.println(e.toString());
+				System.exit(1);
+			}
 		}
 		
-		return new Trainer(units).train();
+		return visitor.data;
 	}
 	
 	private LinkedList<File> pickFiles(LinkedList<File> ls, int howmany)
@@ -85,6 +91,14 @@ public class Test implements Runnable {
 			System.out.println("=========== ITERATION " + project + " " + i + " ===========");
 			
 			TrainingData data = trainWithList(prj, ls);
+
+			System.out.println("Literals: " + data.getLiteralFreq());
+			System.out.println("Variables: " + data.getVariableFreq());
+			System.out.println("Methods: " + data.getMethodFreq());
+			
+			Debug.print(Debug.Mode.ENUMLITERALS, data.enumLiterals.toString());
+			
+			
 			TestVisitor visitor = new TestVisitor(data);
 			
 			for(File test : outls) {
@@ -96,6 +110,7 @@ public class Test implements Runnable {
 				} catch (IOException e) {
 					System.out.println("Unable to write to dump file");
 				}
+				visitor.setUnit(testFile.getUnit());
 				testFile.accept(visitor);
 			}
 			
@@ -125,9 +140,16 @@ public class Test implements Runnable {
 		
 		getAllFiles(dir, allFiles);
 		trainWithList(jproj, allFiles);
-		ResultTable results = trainLeaveFractionOut(jproj, allFiles, 0.1, 10);
+		ResultTable results = trainLeaveFractionOut(jproj, allFiles, 0.1, 1);
 		
 		System.out.println("Accuracy rate: " + results.getAverage());
+		
+		int[] h = results.getHistogram();
+		
+		for (int i = 0; i <= 10 ; i++) {
+			System.out.println("Upto: " + i + " = " + h[i]);
+		}
+		
 		final long end = System.currentTimeMillis();
 		final long totalTime = end - start;
 		System.out.println("=========== EXECUTION TIME: " + totalTime + " milliseconds =============");

@@ -17,7 +17,7 @@ public class ResultTable {
 		Result result = new Result(node, type, Util.findForm(node), Util.findContext(node), prob);
 		probabilities.add(result);
 		total++;
-		total_prob += prob;
+		total_prob += Math.exp(prob);
 	}
 	
 	public double averageForType(String type)
@@ -75,6 +75,28 @@ public class ResultTable {
 	public double getAverage()
 	{
 		return total_prob / (double)total;
+	}
+	
+	public int[] getHistogram()
+	{
+		int[] h = new int[11];
+		
+		for (Result r : probabilities) {
+			double p = Math.exp(r.prob);
+			if (p == 0) {
+				h[0]++;
+			} else {
+			for (int i = 1; i <= 10; i++) {
+				double lower = ((double)(i-1))/10;
+				double upper = ((double)i)/10;
+				
+				if ((lower < p) && (p <= upper)) {
+					h[i]++;
+				}
+			}
+			}
+		}
+		return h;
 	}
 	
 }
