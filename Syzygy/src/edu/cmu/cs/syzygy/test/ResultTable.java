@@ -14,10 +14,12 @@ public class ResultTable {
 	
 	public void addResult(Expression node, String type, final double prob)
 	{
+		
 		if(Double.isNaN(prob)) {
 			throw new ArithmeticException("probability is NaN");
 		}
 		
+		/* These things are possible because this is log prob
 		if(Double.isInfinite(prob)) {
 			throw new ArithmeticException("probability is infinite");
 		}
@@ -25,10 +27,10 @@ public class ResultTable {
 		if(prob < 0.0 || prob > 1.0) {
 			throw new ArithmeticException("probability must be between 0.0 and 1.0");
 		}
+		*/
 		
 		assert(prob >= 0.0 && prob <= 1.0);
 		
-		System.out.println(node + " type " + prob);
 		Result result = new Result(node, type, Util.findForm(node), Util.findContext(node), prob);
 		probabilities.add(result);
 		total++;

@@ -10,7 +10,7 @@ public class Debug {
 		BASICBUGS, NUMBERLITERAL, INFO, EXCEPTIONS
 	}
 	
-	private static Mode[] modes = {Mode.ENUMLITERALS};
+	private static Mode[] modes = {Mode.INFO, Mode.EXCEPTIONS};
 	
 	public static void print(Mode m, String message) {
 		for (Mode allowed : modes) {
