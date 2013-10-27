@@ -367,11 +367,20 @@ public class Predictor {
 		VariableFinder f = new VariableFinder(unit);
 		IBinding[] binds = f.getVariables(e.getStartPosition());
 		int count = 0;
-
+		
 		for(IBinding b : binds) {
-			String typeOther = b.getName();
-			if(type.equals(typeOther)) {
-				count++;
+			if(b instanceof IVariableBinding) {
+				IVariableBinding vb = (IVariableBinding)b;
+				ITypeBinding tb = vb.getType();
+				
+				
+				if(tb != null) {
+					String typeOther = tb.getQualifiedName();
+					if(type.equals(typeOther)) {
+						count++;
+					}
+				}
+			} else {
 			}
 		}
 		
