@@ -77,8 +77,4 @@ public class ResultTable {
 		return total_prob / (double)total;
 	}
 	
-	public double[] getHistogram()
-	{
-		double[] h = new double[10];
-	}
 }

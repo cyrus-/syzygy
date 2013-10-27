@@ -38,8 +38,6 @@ import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 
 import edu.cmu.cs.syzygy.methods.FieldAccessMethod;
 import edu.cmu.cs.syzygy.methods.IMethod;
-import edu.cmu.cs.syzygy.methods.JDTMethodFactory;
-
 
 public class TrainingVisitor extends ASTVisitor {
 	public TrainingData data = null;
@@ -247,7 +245,7 @@ public class TrainingVisitor extends ASTVisitor {
 		// TODO : what to do with super? add to variables?
 		data.variables.add(SyntacticContext.METHOD_TARGET, meth.getDeclaringClass().getQualifiedName());
 		
-		data.methods.add(ctx, type, JDTMethodFactory.getInstance(meth));
+		data.methods.add(ctx, type, data.method_factory.getJDTMethod(meth));
 	}
 
 	
