@@ -12,7 +12,6 @@ import java.util.regex.Matcher;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 
@@ -49,7 +48,9 @@ public class TestVisitor extends ASTVisitor {
 					Debug.print(Debug.Mode.EXCEPTIONS, "Could not resolve binding for: " + e.getMessage());
 				} catch (InvalidDataException e) {
 					Debug.print(Debug.Mode.EXCEPTIONS, "Invalid data : " + e.getMessage());
-				}
+				} catch (ArithmeticException e) {
+                    Debug.print(Debug.Mode.BASICBUGS, "Arithmetic error : " + e.getMessage());
+                }
 			}
 		}
 	}

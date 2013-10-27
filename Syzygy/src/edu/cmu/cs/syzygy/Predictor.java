@@ -111,11 +111,15 @@ public class Predictor {
 		int numMethods = data.getMethodFreq(ctx, type);
 		int total = data.getTotalFreq(ctx, type); //numLit + numMethods + numVar;
 		
+		assert(total == numLit + numVar + numMethods);
+		
 		if(total == 0) {
 			numLit = data.getLiteralFreq(ctx);
 			numVar = data.getVariableFreq(ctx);
 			numMethods = data.getMethodFreq(ctx);
 			total = data.getTotalFreq(ctx, type); //numLit + numVar + numMethods;
+			
+			assert(total == numLit + numVar + numMethods);
 			
 			if (total == 0) {
 				numLit = data.getLiteralFreq();
@@ -123,6 +127,8 @@ public class Predictor {
 				numMethods = data.getMethodFreq();
 				
 				total = data.getTotalFreq(); //numLit + numVar + numMethods;
+				
+				assert(total == numLit + numVar + numMethods);
 				
 				if (total == 0) {
 					throw new InvalidDataException("No form data in training data : " + form.toString() + " , " + ctx.toString() + " , " + type);
@@ -355,11 +361,20 @@ public class Predictor {
 		VariableFinder f = new VariableFinder(unit);
 		IBinding[] binds = f.getVariables(e.getStartPosition());
 		int count = 0;
-
+		
 		for(IBinding b : binds) {
-			String typeOther = b.getName();
-			if(type.equals(typeOther)) {
-				count++;
+			if(b instanceof IVariableBinding) {
+				IVariableBinding vb = (IVariableBinding)b;
+				ITypeBinding tb = vb.getType();
+				
+				
+				if(tb != null) {
+					String typeOther = tb.getQualifiedName();
+					if(type.equals(typeOther)) {
+						count++;
+					}
+				}
+			} else {
 			}
 		}
 		

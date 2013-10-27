@@ -56,8 +56,7 @@ public class Test implements Runnable {
 			try {
 			  jfile.accept(visitor);
 			} catch (ResolveBindingException e) {
-				System.out.println(e.toString());
-				System.exit(1);
+				System.out.println("Could not resolve binding while training: " + e.toString());
 			}
 		}
 		
@@ -109,6 +108,7 @@ public class Test implements Runnable {
 					visitor.setFile(test, new BufferedWriter(new FileWriter(test.getName() + Integer.toString(i))));
 				} catch (IOException e) {
 					System.out.println("Unable to write to dump file");
+					continue;
 				}
 				visitor.setUnit(testFile.getUnit());
 				testFile.accept(visitor);
@@ -140,7 +140,7 @@ public class Test implements Runnable {
 		
 		getAllFiles(dir, allFiles);
 		trainWithList(jproj, allFiles);
-		ResultTable results = trainLeaveFractionOut(jproj, allFiles, 0.1, 1);
+		ResultTable results = trainLeaveFractionOut(jproj, allFiles, 0.1, 10);
 		
 		System.out.println("Accuracy rate: " + results.getAverage());
 		

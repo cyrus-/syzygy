@@ -1,7 +1,6 @@
 package edu.cmu.cs.syzygy;
 
 import java.util.Hashtable;
-import java.util.Map.Entry;
 
 public class FrequencyTable<T> {
 	private Table<SyntacticContext, String> countTable = new Table<SyntacticContext, String>();
