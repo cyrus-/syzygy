@@ -29,8 +29,6 @@ public class ResultTable {
 		}
 		*/
 		
-		assert(prob >= 0.0 && prob <= 1.0);
-		
 		Result result = new Result(node, type, Util.findForm(node), Util.findContext(node), prob);
 		probabilities.add(result);
 		total++;
