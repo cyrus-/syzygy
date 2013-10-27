@@ -8,6 +8,8 @@ import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
 
+import edu.cmu.cs.syzygy.NotImplementedException;
+
 public class MethodFactory {
 
 	private Hashtable<IMethodBinding, JDTMethod> jdtMethods = new Hashtable<IMethodBinding, JDTMethod>();
@@ -26,6 +28,14 @@ public class MethodFactory {
 	
 	public FieldAccessMethod getFieldAccessMethod(IVariableBinding field_binding) {
 		FieldAccessMethod m = fieldAccessMethods.get(field_binding);
+		if (field_binding.getDeclaringClass() == null) {
+			//System.out.println("No declaring class: " + field_binding);
+			throw new NotImplementedException("Unkown problem with field binding");
+		}
+		if (field_binding.getType() == null) {
+			//System.out.println("No type: " + field_binding);
+			throw new NotImplementedException("Unkown problem with field binding");
+		}
 		if (m == null) {
 			FieldAccessMethod mnew = new FieldAccessMethod(field_binding.getDeclaringClass().getQualifiedName(), field_binding.getType().getQualifiedName(), Modifier.isStatic(field_binding.getModifiers()));
 			fieldAccessMethods.put(field_binding, mnew);

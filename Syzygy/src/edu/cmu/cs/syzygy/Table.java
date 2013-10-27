@@ -1,6 +1,7 @@
 package edu.cmu.cs.syzygy;
 
 import java.util.Hashtable;
+import java.util.Map.Entry;
 
 /**
  * Table for counting pairs of items of different types.
@@ -17,9 +18,13 @@ public class Table<T1, T2> {
 	
 	private int total = 0;
 	
-	public String toString()
-	{
-		return all.toString();
+	public String toString() {
+		
+		StringBuilder sb = new StringBuilder();
+		for (Entry<Pair<T1, T2>, Integer> e : all.entrySet()) {
+			sb.append(e.getKey().toString() + " = " + e.getValue().toString() + "\n");
+		}
+		return sb.toString();
 	}
 	
 	public void add(T1 t1, T2 t2)

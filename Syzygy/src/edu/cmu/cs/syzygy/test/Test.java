@@ -97,6 +97,7 @@ public class Test implements Runnable {
 			
 			Debug.print(Debug.Mode.ENUMLITERALS, data.enumLiterals.toString());
 			
+			Debug.print(Debug.Mode.INFO, data.toString());
 			
 			TestVisitor visitor = new TestVisitor(data);
 			
@@ -111,6 +112,7 @@ public class Test implements Runnable {
 					continue;
 				}
 				visitor.setUnit(testFile.getUnit());
+				
 				testFile.accept(visitor);
 			}
 			
@@ -140,9 +142,9 @@ public class Test implements Runnable {
 		
 		getAllFiles(dir, allFiles);
 		trainWithList(jproj, allFiles);
-		ResultTable results = trainLeaveFractionOut(jproj, allFiles, 0.1, 10);
+		ResultTable results = trainLeaveFractionOut(jproj, allFiles, 0.1, 1);
 		
-		System.out.println("Accuracy rate: " + results.getAverage());
+		System.out.println("Accuracy rate: " + results.getAverage() * 100);
 		
 		int[] h = results.getHistogram();
 		

@@ -29,7 +29,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
 public class Util {
-	
+	/*
 	public static String normalizeNumberLiteral(NumberLiteral x, String type) {
 		if (type.equals("int")) {
 			// XXX: this fails when integer is for example 0x23
@@ -41,7 +41,11 @@ public class Util {
 		} else if (type.equals("short")) {
 			return Short.toString(Short.parseShort(x.getToken()));
 		} else if (type.equals("long")) {
-			return Long.toString(Long.parseLong(x.getToken()));
+			String t = x.getToken();
+			if (t.endsWith("L") || t.endsWith("l")) {
+			  return Long.toString(Long.parseLong(x.getToken().substring(0, x.getToken().length() - 1)));	
+			}
+			return Long.toString
 		} else if (type.equals("byte")) {
 			return Byte.toString(Byte.parseByte(x.getToken()));
 		} else if (type.equals("float")) {
@@ -50,7 +54,7 @@ public class Util {
 			return Double.toString(Double.parseDouble(x.getToken()));
 		} else throw new RuntimeException("weird number literal: " + x.getToken());
 	}
-	
+	*/
 	
 	private static String getIdentifierFromName(Name name) {
 		if (name instanceof SimpleName) {

@@ -29,7 +29,16 @@ public class TrainingData {
 	
 	public String toString()
 	{
-		return total.toString();
+		StringBuilder sb = new StringBuilder();
+		sb.append("Literal form:\n");
+		sb.append(literals.toString());
+		sb.append("\n");
+		sb.append("Variable form:\n");
+		sb.append(variables.toString());
+		sb.append("\n");
+		sb.append("Methods:\n");
+		sb.append(methods.toString());
+		return sb.toString();
 	}
 	
 	public void addBoolean(boolean b) {

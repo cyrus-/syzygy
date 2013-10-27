@@ -25,4 +25,8 @@ public class Pair<T1, T2> {
 	public int hashCode() {
 		return (fst.toString() + snd.toString()).hashCode();
 	}
+	
+	public String toString() {
+		return "(" + fst.toString() + " , " + snd.toString() + ")";
+	}
 }

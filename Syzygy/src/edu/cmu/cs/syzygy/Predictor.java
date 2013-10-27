@@ -102,24 +102,23 @@ public class Predictor {
 		else if (e instanceof ThisExpression) return prob((ThisExpression)e, ctx, type);
 		else if (e instanceof TypeLiteral) return prob((TypeLiteral)e, ctx, type);
 		else if (e instanceof VariableDeclarationExpression) return prob((VariableDeclarationExpression)e, ctx, type);
-		else throw new RuntimeException("Invalid expression form!");
+		else throw new NotImplementedException("Invalid expression form!");
 	}
 
 	public double formProb(SyntacticForm form, SyntacticContext ctx, String type) {
 		int numLit = data.getLiteralFreq(ctx, type);
 		int numVar = data.getVariableFreq(ctx, type);
 		int numMethods = data.getMethodFreq(ctx, type);
-		int total = data.getTotalFreq(ctx, type); //numLit + numMethods + numVar;
+		int total = data.getTotalFreq(ctx, type);
 		
-		assert(total == numLit + numVar + numMethods);
+		//assert(total == numLit + numVar + numMethods);
 		
 		if(total == 0) {
 			numLit = data.getLiteralFreq(ctx);
 			numVar = data.getVariableFreq(ctx);
 			numMethods = data.getMethodFreq(ctx);
-			total = data.getTotalFreq(ctx, type); //numLit + numVar + numMethods;
+			total = data.getTotalFreq(ctx, type);
 			
-			assert(total == numLit + numVar + numMethods);
 			
 			if (total == 0) {
 				numLit = data.getLiteralFreq();
@@ -142,11 +141,20 @@ public class Predictor {
 		
 		switch (form) {
 		case LIT:
+		{
+			Debug.print(Debug.Mode.INFO, "Form prob LIT : " + (((double)numLit) / ((double)total)));
 			return Math.log(numLit) - Math.log(total);
+		}
 		case METHOD:
+		{
+			Debug.print(Debug.Mode.INFO, "Form prob METHOD : " + (((double)numMethods) / ((double)total)));
 			return Math.log(numMethods) - Math.log(total);
+		}
 		case VAR:
+		{
+			Debug.print(Debug.Mode.INFO, "Form prob VAR : " + (((double)numVar) / ((double)total)));
 			return Math.log(numVar) - Math.log(total);
+		}
 	    default:
 	    	throw new RuntimeException("form switching didn't work.. blah");
 		}
@@ -160,9 +168,9 @@ public class Predictor {
 		double formProb = formProb(SyntacticForm.LIT, ctx, type);
 		
 		if (Util.isInt(type)) {
-			return formProb + data.intData.lnProb(Util.normalizeNumberLiteral(x, type));
+			return formProb + data.intData.lnProb(x.getToken());
 		} else {
-			return formProb + data.floatingData.lnProb(Util.normalizeNumberLiteral(x, type));
+			return formProb + data.floatingData.lnProb(x.getToken());
 		}
 	}
 	
@@ -451,9 +459,11 @@ public class Predictor {
 		double formProb = formProb(SyntacticForm.VAR, ctx, type);
 		int accVar = accessibleVars(e, type);
 		
+		Debug.print(Debug.Mode.VARIABLES, "Variable: " + e.toString() + " , form prob : " + formProb + ", number = " + accVar);
 		if (accVar == 0) {
 			return Math.log(0);
 		}
+		
 		
 		return formProb - Math.log(accVar);
 	}

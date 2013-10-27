@@ -45,7 +45,12 @@ public class TrainingVisitor extends ASTVisitor {
 	
 	public void preVisit(ASTNode e) {
 		if (e instanceof Expression) {
+			try {
 			visit((Expression)e);
+			} catch (NotImplementedException e1) {
+				//Debug.print(Debug.Mode.EXCEPTIONS, "NotImplementedException while training: " + e.getMessage());
+			} catch (ResolveBindingException e2) {
+	        }
 		}
 	}
 	
