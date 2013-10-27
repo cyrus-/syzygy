@@ -44,6 +44,10 @@ public class FrequencyTable<T> {
 	}
 	
 	public int getCount(SyntacticContext ctx, String type) {
-		return numElems.get(new Pair<SyntacticContext, String>(ctx, type));
+		Pair<SyntacticContext, String> p = new Pair<SyntacticContext, String>(ctx, type);
+		Integer ret = numElems.get(p);
+		if(ret == null)
+			return 0;
+		return ret.intValue();
 	}
 }

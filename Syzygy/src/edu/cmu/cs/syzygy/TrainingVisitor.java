@@ -1,52 +1,46 @@
 package edu.cmu.cs.syzygy;
 
-import java.util.ArrayList;
-
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.ArrayAccess;
-import org.eclipse.jdt.core.dom.ArrayCreation;
-import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.BooleanLiteral;
-import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.CharacterLiteral;
-import org.eclipse.jdt.core.dom.ClassInstanceCreation;
-import org.eclipse.jdt.core.dom.ConditionalExpression;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
-import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NullLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
-import org.eclipse.jdt.core.dom.PostfixExpression;
-import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.ThisExpression;
-import org.eclipse.jdt.core.dom.TypeLiteral;
-import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
-
-
-import edu.cmu.cs.syzygy.methods.FieldAccessMethod;
-import edu.cmu.cs.syzygy.methods.IMethod;
 
 public class TrainingVisitor extends ASTVisitor {
 	public TrainingData data = null;
 	
+	public void preVisit(ASTNode n) {
+		if(n instanceof Expression) {
+			visitExpr((Expression)n);
+		}
+	}
 	
-	public boolean visit(Expression e) {
+	public boolean visitExpr(Expression e) {
 		SyntacticContext ctx = Util.findContext(e);
 		
-		String type = e.resolveTypeBinding().getQualifiedName();
+		ITypeBinding tb = e.resolveTypeBinding();
+		if(tb == null) {
+			return true;
+		}
+		
+		String type = tb.getQualifiedName();
 		
 		data.incrementTotal(ctx, type);
 		
@@ -108,7 +102,6 @@ public class TrainingVisitor extends ASTVisitor {
 		data.literals.add(ctx, type);
 	}
 
-	
 	public void train(Name e, SyntacticContext ctx, String type) {
 		if (Util.isEnumLiteral(e)) {
 			data.enumLiterals.add(ctx, type, Util.getFullName(e));

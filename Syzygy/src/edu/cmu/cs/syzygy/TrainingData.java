@@ -27,6 +27,11 @@ public class TrainingData {
 	public TrainingData() {
 	}
 	
+	public String toString()
+	{
+		return total.toString();
+	}
+	
 	public void addBoolean(boolean b) {
 		booleanLiteral.fst = booleanLiteral.fst + 1;
 		

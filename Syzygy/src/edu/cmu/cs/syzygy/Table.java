@@ -17,6 +17,11 @@ public class Table<T1, T2> {
 	
 	private int total = 0;
 	
+	public String toString()
+	{
+		return all.toString();
+	}
+	
 	public void add(T1 t1, T2 t2)
 	{
 		// for t1
