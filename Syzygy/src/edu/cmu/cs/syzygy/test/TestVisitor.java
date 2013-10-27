@@ -43,6 +43,8 @@ public class TestVisitor extends ASTVisitor {
 					System.out.println("Not implemented: " + e.getMessage());
 				} catch (ResolveBindingException e) {
 					System.out.println("Could not resolve binding for: " + e.getMessage());
+				} catch(ArithmeticException e) {
+					System.out.println("Arithmetic error: " + e.getMessage());
 				}
 			}
 		}
@@ -116,9 +118,10 @@ public class TestVisitor extends ASTVisitor {
 		return table;
 	}
 	
-	public void setFile(File f, BufferedWriter buf) {
+	public void setFile(File f, BufferedWriter buf, JavaFile jfile) {
 		test_file = f;
 		output_file_buffer = buf;
+		pred.setUnit(jfile.getUnit());
 	}
 	
 	TestVisitor(TrainingData data)

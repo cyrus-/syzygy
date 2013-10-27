@@ -92,10 +92,13 @@ public class Test implements Runnable {
 				JavaFile testFile = new JavaFile(test, prj);
 				
 				try {
-					visitor.setFile(test, new BufferedWriter(new FileWriter(test.getName() + Integer.toString(i))));
+					visitor.setFile(test, new BufferedWriter(new FileWriter(test.getName() + Integer.toString(i))), testFile);
 				} catch (IOException e) {
 					System.out.println("Unable to write to dump file");
+					continue;
 				}
+				
+				
 				testFile.accept(visitor);
 			}
 			
