@@ -88,7 +88,7 @@ public class Predictor {
 	/* EXPRESSIONS */
 	
 	public double prob(Expression e, SyntacticContext ctx, String type) {
-		     if (e instanceof Annotation) return prob((Annotation)e, ctx, type);
+		if (e instanceof Annotation) return prob((Annotation)e, ctx, type);
 		else if (e instanceof ArrayAccess) return prob((ArrayAccess)e, ctx, type);
 		else if (e instanceof ArrayCreation) return prob((ArrayCreation)e, ctx, type);
 		else if (e instanceof Assignment) return prob((Assignment)e, ctx, type);
