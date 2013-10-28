@@ -10,10 +10,10 @@ public class Debug {
 		BASICBUGS, NUMBERLITERAL, INFO, EXCEPTIONS
 	}
 	
-	private static Mode[] modes = {Mode.INFO, Mode.VARIABLES};
+	private static Mode[] allowed_modes = {};
 	
 	public static void print(Mode m, String message) {
-		for (Mode allowed : modes) {
+		for (Mode allowed : allowed_modes) {
 			if (m.equals(allowed)) {
 				System.out.println(message);
 			}

@@ -284,13 +284,16 @@ public class Predictor {
 		double mProb = methodProb(invocation, m, ctx, type);
 		
 		double tProb = 0;
-		if (! m.isStatic()) {
+		if (!m.isStatic()) {
 			if (methodTarget == null) {
 				// Implicit 'this' variable
 				variableProb(invocation, SyntacticContext.METHOD_TARGET, m.getTargetType());
 			}
 			else {
-				tProb = prob(methodTarget, SyntacticContext.METHOD_TARGET, m.getTargetType());
+				ITypeBinding target_type = methodTarget.resolveTypeBinding();
+				if (target_type == null) throw new ResolveBindingException("Could not resolve binding: " + target_type);
+				
+				tProb = prob(methodTarget, SyntacticContext.METHOD_TARGET, target_type.getQualifiedName());
 			}
 		}
 		

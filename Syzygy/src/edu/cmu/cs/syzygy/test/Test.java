@@ -90,10 +90,6 @@ public class Test implements Runnable {
 			System.out.println("=========== ITERATION " + project + " " + i + " ===========");
 			
 			TrainingData data = trainWithList(prj, ls);
-
-			System.out.println("Literals: " + data.getLiteralFreq());
-			System.out.println("Variables: " + data.getVariableFreq());
-			System.out.println("Methods: " + data.getMethodFreq());
 			
 			Debug.print(Debug.Mode.ENUMLITERALS, data.enumLiterals.toString());
 			
@@ -102,7 +98,7 @@ public class Test implements Runnable {
 			TestVisitor visitor = new TestVisitor(data);
 			
 			for(File test : outls) {
-				System.out.println("Testing on " + test);
+				//System.out.println("Testing on " + test);
 				JavaFile testFile = new JavaFile(test, prj);
 				
 				try {
@@ -142,9 +138,9 @@ public class Test implements Runnable {
 		
 		getAllFiles(dir, allFiles);
 		trainWithList(jproj, allFiles);
-		ResultTable results = trainLeaveFractionOut(jproj, allFiles, 0.1, 1);
+		ResultTable results = trainLeaveFractionOut(jproj, allFiles, 0.1, 10);
 		
-		System.out.println("Accuracy rate: " + results.getAverage() * 100);
+		System.out.println("Accuracy rate (" + project + "): " + results.getAverage() * 100);
 		
 		int[] h = results.getHistogram();
 		

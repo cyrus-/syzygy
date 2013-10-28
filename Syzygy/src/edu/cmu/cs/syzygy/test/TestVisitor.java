@@ -34,7 +34,6 @@ public class TestVisitor extends ASTVisitor {
 	{
 		if(node instanceof Expression) {
 			Expression expr = (Expression)node;
-			dumpExpression(expr);
 			
 			ITypeBinding binding = expr.resolveTypeBinding();
 			if(binding != null) {
@@ -43,6 +42,7 @@ public class TestVisitor extends ASTVisitor {
 					double prob = pred.prob(expr, Util.findContext(expr), type);
 					Debug.print(Debug.Mode.INFO, "Probability of " + expr.toString() + " : " + Double.toString(Math.exp(prob) * 100) + "%");
 					table.addResult(expr, type, prob);
+					dumpExpression(expr);
 				} catch(NotImplementedException e) {
 					Debug.print(Debug.Mode.EXCEPTIONS, "Not implemented: " + e.getMessage());
 				} catch (ResolveBindingException e) {

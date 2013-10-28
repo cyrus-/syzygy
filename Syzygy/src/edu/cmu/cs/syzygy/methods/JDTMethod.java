@@ -3,6 +3,8 @@ package edu.cmu.cs.syzygy.methods;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.Modifier;
 
+import edu.cmu.cs.syzygy.NotImplementedException;
+
 public class JDTMethod implements IMethod {
 
 	private IMethodBinding m;
@@ -13,13 +15,15 @@ public class JDTMethod implements IMethod {
 	
 	@Override
 	public String getTargetType() {
-		// TODO Auto-generated method stub
+		if (m.getDeclaringClass() == null) {
+			System.out.println("wtf, no declaring class for method: " + m);
+			throw new NotImplementedException("No declaring class for method");
+		}
 		return m.getDeclaringClass().getQualifiedName();
 	}
 
 	@Override
 	public String getReturnType() {
-		// TODO Auto-generated method stub
 		return m.getReturnType().getQualifiedName();
 	}
 
