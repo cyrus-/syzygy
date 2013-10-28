@@ -241,9 +241,12 @@ public class TrainingVisitor extends ASTVisitor {
 			return;
 		
 		if (!Modifier.isStatic(meth.getModifiers())) {
-		
 
 		if (mi.getExpression() == null) {
+		    if (meth.getDeclaringClass() == null) {
+		    	//System.out.println("No declaring class: " + mi);
+		    	throw new NotImplementedException("method without declaring class");
+		    }
 			// Assume a this expression
 			data.variables.add(SyntacticContext.METHOD_TARGET, meth.getDeclaringClass().getQualifiedName());
 		}

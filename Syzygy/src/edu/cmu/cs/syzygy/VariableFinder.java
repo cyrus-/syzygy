@@ -24,7 +24,11 @@ public class VariableFinder {
 
 	public IBinding[] getMethods(int offset)
 	{
+		try {
 		return sa.getDeclarationsInScope(offset, ScopeAnalyzer.METHODS);
+		} catch (NullPointerException e) {
+			throw new NotImplementedException("Scope Analyzer bug");
+		}
 	}
 	
 	public IBinding[] getTypes(int offset)
