@@ -9,7 +9,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 public class EclipseAction implements IWorkbenchWindowActionDelegate {
-	private static final String[] projects = {"jfreechart", "ant", "antlr"};
+	private static final String[] projects = {"jfreechart", "ant", "antlr", "findbugs", "batik", "axion"};
 	
 	public void run(IAction action)
 	{

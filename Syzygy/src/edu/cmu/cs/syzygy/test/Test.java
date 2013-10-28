@@ -95,18 +95,29 @@ public class Test implements Runnable {
 			
 			Debug.print(Debug.Mode.INFO, data.toString());
 			
+			BufferedWriter dumpfile = null;
+			try {
+			   dumpfile = new BufferedWriter(new FileWriter(project + ".tokens" + Integer.toString(i)));
+			   dumpfile.write("" + numTestFiles + "\n");
+				for(File test : outls) {
+					dumpfile.write(test.getAbsolutePath().substring(ResourcesPlugin.getWorkspace().getRoot().getProject(project).getLocation().toFile().getAbsolutePath().length()).substring(1));
+					dumpfile.write("\n");
+				}
+			} catch (IOException e) {
+			  System.out.println("Unable to write to dump file");
+			  continue;
+			}
+
+			
 			TestVisitor visitor = new TestVisitor(data);
 			
 			for(File test : outls) {
 				//System.out.println("Testing on " + test);
 				JavaFile testFile = new JavaFile(test, prj);
 				
-				try {
-					visitor.setFile(test, new BufferedWriter(new FileWriter(test.getName() + Integer.toString(i))));
-				} catch (IOException e) {
-					System.out.println("Unable to write to dump file");
-					continue;
-				}
+				
+			    visitor.setFile(test, dumpfile);
+				
 				visitor.setUnit(testFile.getUnit());
 				
 				testFile.accept(visitor);

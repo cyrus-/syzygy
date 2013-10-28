@@ -298,6 +298,10 @@ public class Predictor {
 		}
 		
 		double aProb = 0;
+		if (arguments.size() != m.getParameterTypes().length) {
+			System.out.println(invocation);
+			throw new NotImplementedException("Not enough parameter types: " + invocation);
+		}
 		for (int i = 0; i < arguments.size(); i++) {
 			aProb += prob((Expression)arguments.get(i), SyntacticContext.METHOD_ARGUMENT, m.getParameterTypes()[i]);
 		}
